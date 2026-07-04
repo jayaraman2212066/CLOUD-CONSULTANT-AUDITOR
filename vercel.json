@@ -18,7 +18,7 @@
     {
       "src": "/dashboard.js",
       "dest": "/frontend/dashboard.js",
-      "headers": { "Cache-Control": "no-store" }
+      "headers": { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" }
     },
     {
       "src": "/styles.css",
