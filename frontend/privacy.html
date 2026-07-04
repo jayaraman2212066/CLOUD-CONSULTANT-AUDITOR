@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — CloudBrief</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=2">
+  <style>
+    .cb-page-nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 56px; background: #0A1628;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .cb-page-nav-links { display: flex; gap: 6px; }
+    .cb-page-nav-link {
+      color: rgba(255,255,255,0.7); text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      padding: 6px 12px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .cb-page-nav-link:hover { background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; }
+    .cb-page-nav-link.active { background: rgba(30,111,217,0.2); color: #fff; }
+
+    .cb-prose {
+      max-width: 800px; margin: 0 auto; padding: 48px 24px;
+    }
+    .cb-prose h1 { font-size: 2rem; color: var(--cb-text-primary); margin-bottom: 8px; }
+    .cb-prose .cb-updated { color: var(--cb-text-muted); font-size: 0.875rem; margin-bottom: 36px; }
+    .cb-prose h2 { font-size: 1.1rem; color: var(--cb-text-primary); margin: 28px 0 10px; font-weight: 600; }
+    .cb-prose p  { margin-bottom: 14px; font-size: 0.9375rem; color: var(--cb-text-primary); line-height: 1.7; }
+    .cb-prose ul { margin: 0 0 14px 20px; font-size: 0.9375rem; }
+    .cb-prose ul li { margin-bottom: 6px; color: var(--cb-text-primary); line-height: 1.6; }
+    .cb-prose code {
+      font-family: var(--font-mono); font-size: 0.875rem;
+      background: var(--cb-surface-sub); border: 1px solid var(--cb-border);
+      padding: 1px 5px; border-radius: 3px; color: var(--cb-accent);
+    }
+    .cb-highlight {
+      background: var(--cb-info-bg); border-left: 4px solid var(--cb-accent);
+      padding: 14px 18px; border-radius: var(--cb-radius);
+      margin-bottom: 24px; font-size: 0.9375rem;
+      color: var(--cb-text-primary); line-height: 1.65;
+    }
+
+    .cb-page-footer {
+      background: var(--cb-navy); color: rgba(255,255,255,0.65);
+      text-align: center; padding: 24px 20px; font-size: 0.875rem;
+    }
+    .cb-page-footer a { color: rgba(255,255,255,0.8); text-decoration: none; margin: 0 10px; }
+    .cb-page-footer a:hover { color: #fff; }
+
+    @media (max-width: 768px) { .cb-page-nav { padding: 0 16px; } }
+  </style>
+</head>
+<body>
+
+<nav class="cb-page-nav" role="banner">
+  <a class="cb-wordmark" href="/dashboard.html" aria-label="CloudBrief home">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         style="color:#1E6FD9;" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <span class="cb-wordmark-text">Cloud<span>Brief</span></span>
+  </a>
+  <div class="cb-page-nav-links">
+    <a class="cb-page-nav-link" href="/dashboard.html">Dashboard</a>
+    <a class="cb-page-nav-link" href="/pricing.html">Pricing</a>
+  </div>
+</nav>
+
+<div class="cb-prose">
+  <h1>Privacy Policy</h1>
+  <p class="cb-updated">Last updated: June 2025</p>
+
+  <div class="cb-highlight">
+    <strong>Short version:</strong> Your uploaded security scan files are processed in memory and never stored.
+    The only data we retain is an anonymised scan summary (score + severity counts) for trend charts.
+    No finding details, resource names, or ARNs are ever saved.
+  </div>
+
+  <h2>1. What Data We Collect</h2>
+  <p><strong>Uploaded JSON files:</strong> Parsed in memory during your request. Never written to disk, never transmitted to third parties, discarded immediately after the response is sent.</p>
+  <p><strong>Scan summaries:</strong> After each report generation, we store a small JSON file containing: date, security score, grade, total finding count, and severity breakdown (critical/high/medium/low counts). No check IDs, resource names, ARNs, account IDs, or finding descriptions are stored.</p>
+  <p><strong>License keys:</strong> Stored as SHA-256 hashes only. The raw key is never persisted. Used solely to validate your subscription tier and enforce report limits.</p>
+  <p><strong>Free-tier fingerprint:</strong> A hash of your IP address and browser User-Agent, used only to enforce the 1-report free limit. Not linked to any personal identity.</p>
+
+  <h2>2. What We Do Not Collect</h2>
+  <ul>
+    <li>No AWS account IDs, ARNs, or resource names from your scan files</li>
+    <li>No finding details, check IDs, or remediation content</li>
+    <li>No cookies, tracking pixels, or analytics scripts</li>
+    <li>No email addresses (unless you contact us directly)</li>
+    <li>No payment card data (handled entirely by Polar.sh)</li>
+  </ul>
+
+  <h2>3. Data Storage Location</h2>
+  <p>All data is stored on the server where you deploy CloudBrief — either your local machine or your own cloud instance. CloudBrief does not operate a central cloud service that receives your data. The only external service contacted is Polar.sh (for license key validation) and Supabase (for license/session storage if you use the hosted version).</p>
+
+  <h2>4. Third-Party Services</h2>
+  <p><strong>Polar.sh:</strong> Handles payment processing and license key issuance. Subject to <a href="https://polar.sh/legal/privacy" target="_blank">Polar's Privacy Policy</a>.</p>
+  <p><strong>Supabase:</strong> Used for license key and session storage in the hosted deployment. Data is stored in the EU/AP region depending on your deployment. Subject to <a href="https://supabase.com/privacy" target="_blank">Supabase's Privacy Policy</a>.</p>
+
+  <h2>5. Data Retention</h2>
+  <ul>
+    <li>Scan summaries: retained for up to 12 scans per company name, then overwritten.</li>
+    <li>License key hashes: retained until the subscription is cancelled.</li>
+    <li>Free-tier fingerprints: retained indefinitely (small record, no PII).</li>
+    <li>Session tokens: expire after 72 hours.</li>
+  </ul>
+
+  <h2>6. Your Rights</h2>
+  <p>To delete your scan history, remove the <code>scan_history/</code> folder from your deployment. To delete your license record or free-tier fingerprint, contact support@cloudbrief.io with your license key prefix (first 8 characters).</p>
+
+  <h2>7. Security</h2>
+  <p>All connections use TLS. License keys are stored as SHA-256 hashes. Session tokens are cryptographically random 32-byte values. The backend never logs uploaded file contents.</p>
+
+  <h2>8. Contact</h2>
+  <p>Privacy questions: <a href="mailto:support@cloudbrief.io">support@cloudbrief.io</a></p>
+</div>
+
+<footer class="cb-page-footer">
+  <p>&copy; 2025 CloudBrief &nbsp;|&nbsp;
+    <a href="/terms.html">Terms of Service</a>
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="mailto:support@cloudbrief.io">support@cloudbrief.io</a>
+  </p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "name": "cloudconsultant-auditor",
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/(health|ready|license|checkout|webhooks|preview-findings|generate-report|generate-ultimate-report|iac-snippet|download-script|export-csv|export-bundle|export-json|trend-history)(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/dashboard.js",
+      "dest": "/frontend/dashboard.js",
+      "headers": { "Cache-Control": "no-store" }
+    },
+    {
+      "src": "/styles.css",
+      "dest": "/frontend/styles.css",
+      "headers": { "Cache-Control": "public, max-age=3600" }
+    },
+    {
+      "src": "/icons.svg",
+      "dest": "/frontend/icons.svg"
+    },
+    {
+      "src": "/pricing.html",
+      "dest": "/frontend/pricing.html"
+    },
+    {
+      "src": "/terms.html",
+      "dest": "/frontend/terms.html"
+    },
+    {
+      "src": "/privacy.html",
+      "dest": "/frontend/privacy.html"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/outputs/J-AI-FINAL_CROP.ico"
+    },
+    {
+      "src": "/logo.png",
+      "dest": "/outputs/J-AI-FINAL_CROP.png"
+    },
+    {
+      "src": "/logo-full.png",
+      "dest": "/outputs/J-AI-FINAL.png"
+    },
+    {
+      "src": "/dashboard.html",
+      "dest": "/frontend/dashboard.html",
+      "headers": { "Cache-Control": "no-store" }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dashboard.html",
+      "headers": { "Cache-Control": "no-store" }
+    }
+  ],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300,
+      "memory": 1024
+    }
+  }
+}

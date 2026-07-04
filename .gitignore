@@ -1,0 +1,72 @@
+# ── Secrets & Environment ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+ENV/
+
+# ── Local Database ────────────────────────────────────────────────────
+backend/database.db
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Scan History (local runtime data) ────────────────────────────────
+backend/scan_history/
+backend/outputs/
+
+# ── Generated PDF / ZIP outputs ───────────────────────────────────────
+outputs/*.pdf
+outputs/*.zip
+*.pdf
+*.zip
+
+# ── Logs ──────────────────────────────────────────────────────────────
+*.log
+backend/server.log
+server_new.log
+
+# ── Dev / Planning notes (not for repo) ──────────────────────────────
+FEATURES_COMPLETE.txt
+FEATURES_PART1.txt
+FEATURES_SUMMARY.txt
+PROJECT_ANALYSIS.txt
+PROJECT_ANALYSIS_PART2.txt
+STEP0_INVENTORY_REPORT.txt
+STEP1_PROGRESS.txt
+UPGRADE_PROMPT.md
+
+# ── Test / Sample data ────────────────────────────────────────────────
+test_prowler.json
+
+# ── Windows scripts (local only) ─────────────────────────────────────
+*.bat
+
+# ── OS & Editor ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Node (if ever added) ──────────────────────────────────────────────
+node_modules/
+
+# ── Vercel local ──────────────────────────────────────────────────────
+.vercel/

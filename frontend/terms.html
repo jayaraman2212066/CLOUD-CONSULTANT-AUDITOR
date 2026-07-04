@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service — CloudConsultant Auditor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=2">
+  <style>
+    .cb-page-nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 56px; background: #0A1628;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .cb-page-nav-links { display: flex; gap: 6px; }
+    .cb-page-nav-link {
+      color: rgba(255,255,255,0.7); text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      padding: 6px 12px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .cb-page-nav-link:hover { background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; }
+    .cb-page-nav-link.active { background: rgba(30,111,217,0.2); color: #fff; }
+
+    .cb-prose {
+      max-width: 800px; margin: 0 auto; padding: 48px 24px;
+    }
+    .cb-prose h1 { font-size: 2rem; color: var(--cb-text-primary); margin-bottom: 8px; }
+    .cb-prose .cb-updated { color: var(--cb-text-muted); font-size: 0.875rem; margin-bottom: 36px; }
+    .cb-prose h2 { font-size: 1.1rem; color: var(--cb-text-primary); margin: 28px 0 10px; font-weight: 600; }
+    .cb-prose p  { margin-bottom: 14px; font-size: 0.9375rem; color: var(--cb-text-primary); line-height: 1.7; }
+    .cb-prose ul { margin: 0 0 14px 20px; font-size: 0.9375rem; }
+    .cb-prose ul li { margin-bottom: 6px; color: var(--cb-text-primary); line-height: 1.6; }
+
+    .cb-page-footer {
+      background: var(--cb-navy); color: rgba(255,255,255,0.65);
+      text-align: center; padding: 24px 20px; font-size: 0.875rem;
+    }
+    .cb-page-footer a { color: rgba(255,255,255,0.8); text-decoration: none; margin: 0 10px; }
+    .cb-page-footer a:hover { color: #fff; }
+
+    @media (max-width: 768px) { .cb-page-nav { padding: 0 16px; } }
+  </style>
+</head>
+<body>
+
+<nav class="cb-page-nav" role="banner">
+  <a class="cb-wordmark" href="/dashboard.html" aria-label="CloudConsultant Auditor home">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         style="color:#1E6FD9;" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <span class="cb-wordmark-text">CloudConsultant <span>Auditor</span></span>
+  </a>
+  <div class="cb-page-nav-links">
+    <a class="cb-page-nav-link" href="/dashboard.html">Dashboard</a>
+    <a class="cb-page-nav-link" href="/pricing.html">Pricing</a>
+  </div>
+</nav>
+
+<div class="cb-prose">
+  <h1>Terms of Service</h1>
+  <p class="cb-updated">Last updated: June 2025</p>
+
+  <h2>1. Acceptance</h2>
+  <p>By using CloudConsultant Auditor ("the Service"), you agree to these Terms. If you do not agree, do not use the Service.</p>
+
+  <h2>2. Description of Service</h2>
+  <p>CloudConsultant Auditor is a self-hosted security report generation tool that parses Prowler, ScoutSuite, and AWS Security Hub JSON output and produces professional PDF reports. All processing occurs on your own infrastructure — no data is transmitted to CloudConsultant Auditor servers.</p>
+
+  <h2>3. License Tiers and Report Limits</h2>
+  <ul>
+    <li><strong>Free:</strong> 1 lifetime report per device fingerprint. No card required.</li>
+    <li><strong>Freelancer ($79/mo):</strong> 15 reports per calendar month, 1 seat.</li>
+    <li><strong>Consultant Pro ($199/mo):</strong> 60 reports per calendar month, up to 3 seats.</li>
+    <li><strong>Pay Per Report ($5.99):</strong> 1 report per purchase, no expiry, independent of subscription quota.</li>
+  </ul>
+  <p>Report counts reset on the first day of each calendar month for subscription tiers. Unused reports do not roll over.</p>
+
+  <h2>4. Payments and Refunds</h2>
+  <p>Payments are processed by Polar.sh. Subscription charges are billed monthly. You may cancel at any time; cancellation takes effect at the end of the current billing period. Pay-per-report purchases are non-refundable once the report has been generated. For billing disputes, contact support@CloudConsultant Auditor.io within 14 days of the charge.</p>
+
+  <h2>5. Acceptable Use</h2>
+  <p>You may only use the Service to audit AWS environments for which you have explicit authorisation. You may not:</p>
+  <ul>
+    <li>Use the Service to process data from environments you do not own or have written permission to audit.</li>
+    <li>Attempt to reverse-engineer, resell, or redistribute the Service.</li>
+    <li>Use the Service in violation of any applicable law or regulation.</li>
+  </ul>
+
+  <h2>6. Data and Privacy</h2>
+  <p>CloudConsultant Auditor processes your uploaded JSON files in memory only. No finding details, resource names, or ARNs are stored on any server. Only anonymised scan summaries (score, grade, severity counts) are retained locally for trend analysis. See our <a href="/privacy.html">Privacy Policy</a> for full details.</p>
+
+  <h2>7. Disclaimer of Warranties</h2>
+  <p>The Service is provided "as is" without warranty of any kind. CloudConsultant Auditor does not warrant that reports are free of errors or that remediation steps will resolve all security issues. Reports are advisory only — always test changes in non-production environments before applying them.</p>
+
+  <h2>8. Limitation of Liability</h2>
+  <p>To the maximum extent permitted by law, CloudConsultant Auditor shall not be liable for any indirect, incidental, or consequential damages arising from use of the Service, including but not limited to data loss, security breaches, or business interruption.</p>
+
+  <h2>9. Changes to Terms</h2>
+  <p>We may update these Terms at any time. Continued use of the Service after changes constitutes acceptance of the new Terms.</p>
+
+  <h2>10. Contact</h2>
+  <p>Questions about these Terms: <a href="mailto:support@CloudConsultant Auditor.io">support@CloudConsultant Auditor.io</a></p>
+</div>
+
+<footer class="cb-page-footer">
+  <p>&copy; 2025 CloudConsultant Auditor &nbsp;|&nbsp;
+    <a href="/terms.html">Terms of Service</a>
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="mailto:support@CloudConsultant Auditor.io">support@CloudConsultant Auditor.io</a>
+  </p>
+</footer>
+</body>
+</html>
