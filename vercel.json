@@ -1,15 +1,12 @@
 {
   "version": 2,
   "name": "cloudconsultant-auditor",
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300,
+      "memory": 1024
     }
-  ],
+  },
   "routes": [
     {
       "src": "/api/(.*)",
@@ -67,11 +64,5 @@
       "dest": "/frontend/dashboard.html",
       "headers": { "Cache-Control": "no-store" }
     }
-  ],
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 300,
-      "memory": 1024
-    }
-  }
+  ]
 }
