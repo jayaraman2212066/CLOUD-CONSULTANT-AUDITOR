@@ -276,6 +276,11 @@ function initFileUpload() {
 }
 
 function handleFileSelect(file) {
+  const limitMB = CB_STATE.isProActive ? 500 : 50;
+  if (file.size > limitMB * 1024 * 1024) {
+    showToast(`File exceeds ${limitMB} MB limit. ${CB_STATE.isProActive ? '' : 'Upgrade to a paid plan for up to 500 MB.'}`, 'error');
+    return;
+  }
   const sizeKB = (file.size / 1024).toFixed(1);
   const label  = `${file.name} (${sizeKB} KB) — Ready to analyse`;
   const nameEl = document.getElementById('fileName');
@@ -328,6 +333,9 @@ async function loadLicenseStatus() {
       if (text) text.textContent = `${tier} ACTIVE`;
       const rem = data.reports_remaining != null ? `${data.reports_remaining} reports remaining · ` : '';
       if (detail) detail.textContent = `${rem}Expires ${data.expires_at?.slice(0,10) || 'N/A'}`;
+      // Update upload limit badge
+      const badge = document.getElementById('cb-upload-limit-badge');
+      if (badge) badge.innerHTML = `<svg width="12" height="12" aria-hidden="true"><use href="#ic-info"/></svg> 500 MB max`;
     } else {
       CB_STATE.isProActive = false;
       if (pill) { pill.className = 'cb-license-pill free'; }

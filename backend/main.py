@@ -115,8 +115,13 @@ def rate_limit(request: Request):
     _rate_store[ip].append(now)
 
 # ── Validators ────────────────────────────────────────────────────────────────
-_MAX_JSON_MB   = int(os.getenv("MAX_JSON_MB", "50"))
-_MAX_LOGO_MB   = 2
+_MAX_JSON_MB_FREE = int(os.getenv("MAX_JSON_MB_FREE", "50"))
+_MAX_JSON_MB_PRO  = int(os.getenv("MAX_JSON_MB", "500"))
+_MAX_LOGO_MB      = 2
+
+def _upload_limit_mb(session) -> int:
+    """Return upload limit in MB: 500 for paid sessions, 50 for free."""
+    return _MAX_JSON_MB_PRO if session else _MAX_JSON_MB_FREE
 _ALLOWED_COLOR = set("0123456789abcdefABCDEF#")
 
 def _validate_color(c: str) -> str:
@@ -164,12 +169,12 @@ def _load_history(company: str) -> list:
         return []
 
 # ── Shared upload parser ──────────────────────────────────────────────────────
-async def _parse_upload(file: UploadFile) -> tuple:
+async def _parse_upload(file: UploadFile, max_mb: int = _MAX_JSON_MB_FREE) -> tuple:
     if not file.filename or not file.filename.lower().endswith(".json"):
         raise HTTPException(400, "Only .json files are accepted.")
     content = await file.read()
-    if len(content) > _MAX_JSON_MB * 1024 * 1024:
-        raise HTTPException(413, f"File exceeds {_MAX_JSON_MB} MB limit.")
+    if len(content) > max_mb * 1024 * 1024:
+        raise HTTPException(413, f"File exceeds {max_mb} MB limit. Upgrade to a paid plan for up to 500 MB.")
     try:
         raw = json.loads(content)
     except json.JSONDecodeError as e:
@@ -485,6 +490,8 @@ async def generate_report(
         else:
             check_free_tier(request, db)
 
+        max_mb = _upload_limit_mb(session)
+
         try:
             exc_list = json.loads(exceptions_json)
             if not isinstance(exc_list, list):
@@ -493,7 +500,7 @@ async def generate_report(
         except Exception:
             exc_list = []
 
-        _, findings, grouped, severity, by_svc, risk = await _parse_upload(file)
+        _, findings, grouped, severity, by_svc, risk = await _parse_upload(file, max_mb)
         main_f = [f for f in grouped if f["check_id"] not in exc_list]
         exc_f  = [f for f in grouped if f["check_id"] in exc_list]
 
@@ -564,7 +571,8 @@ async def generate_ultimate_report(
         else:
             check_free_tier(request, db)
 
-        _, findings, grouped, severity, by_svc, risk = await _parse_upload(file)
+        max_mb = _upload_limit_mb(session)
+        _, findings, grouped, severity, by_svc, risk = await _parse_upload(file, max_mb)
 
         logo_bytes = None
         if logo and logo.filename:
@@ -689,7 +697,8 @@ async def export_bundle(
         else:
             check_free_tier(request, db)
 
-        _, findings, grouped, severity, by_svc, risk = await _parse_upload(file)
+        max_mb = _upload_limit_mb(session)
+        _, findings, grouped, severity, by_svc, risk = await _parse_upload(file, max_mb)
         costs = estimate_costs(grouped)
 
         logo_bytes = None
