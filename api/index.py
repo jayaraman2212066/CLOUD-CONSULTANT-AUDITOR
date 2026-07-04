@@ -1,7 +1,8 @@
 """
 Vercel serverless entry point.
-Imports the FastAPI app from backend/main.py, wraps it with Mangum
-so Vercel's @vercel/python (ASGI) runtime can serve it.
+Vercel's @vercel/python runtime uses a WSGI bridge internally —
+we expose the raw FastAPI ASGI app; Vercel handles the ASGI<->WSGI
+translation itself via its runtime shim.
 """
 import sys
 import os
@@ -18,11 +19,4 @@ try:
 except Exception:
     pass
 
-from main import app as _fastapi_app  # noqa: F401
-from mangum import Mangum
-
-# Vercel invokes `handler` as the ASGI entry point
-handler = Mangum(_fastapi_app, lifespan="off")  # noqa: F401
-
-# Also expose `app` for any tooling that looks for it
-app = handler  # noqa: F401
+from main import app  # noqa: F401  — Vercel looks for `app`
