@@ -23,7 +23,7 @@
     {
       "src": "/styles.css",
       "dest": "/frontend/styles.css",
-      "headers": { "Cache-Control": "public, max-age=3600" }
+      "headers": { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" }
     },
     {
       "src": "/icons.svg",
