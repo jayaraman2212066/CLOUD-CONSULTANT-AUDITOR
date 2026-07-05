@@ -76,6 +76,11 @@ body > div[aria-hidden="true"] {
 /* Prevent bare SVG symbols from taking layout space */
 svg:not([class]):not([id]) { display: none; }
 
+/* Allow inline SVGs inside buttons/links that have no class */
+.cb-theme-btn svg,
+.cb-nav-link svg,
+.cb-btn svg { display: inline-block !important; }
+
 /* ── Google Fonts loaded in HTML head ──────────────────────────────
    Inter: 300,400,500,600,700
    IBM Plex Mono: 400,500
