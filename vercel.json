@@ -21,26 +21,12 @@
       "headers": { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" }
     },
     {
-      "src": "/styles.v5.css",
-      "dest": "/frontend/styles.v5.css",
-      "headers": { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" }
-    },
-    {
       "src": "/styles.css",
       "dest": "/frontend/styles.css",
       "headers": { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" }
     },
     {
-      "src": "/J-AI-FINAL_CROP.png",
-      "dest": "/frontend/J-AI-FINAL_CROP.png",
-      "headers": { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" }
-    },
-    {
-      "src": "/J-AI-FINAL.png",
-      "dest": "/frontend/J-AI-FINAL.png",
-      "headers": { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" }
-    },
-    {
+      "src": "/icons.svg",
       "dest": "/frontend/icons.svg"
     },
     {
