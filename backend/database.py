@@ -90,14 +90,43 @@ def _sqlite_engine():
     )
 
 
+def _candidate_db_urls():
+    candidates = []
+    for key in [
+        "DATABASE_URL",
+        "POSTGRES_URL",
+        "POSTGRES_PRISMA_URL",
+        "POSTGRES_URL_NON_POOLING",
+        "SUPABASE_DB_URL",
+    ]:
+        value = (os.getenv(key) or "").strip()
+        if value:
+            candidates.append(value)
+    # Keep the direct non-pooling URL ahead of pooler URLs when both are present.
+    direct = [u for u in candidates if "pooler.supabase.com" not in u and "pgbouncer=true" not in u]
+    pooled = [u for u in candidates if u not in direct]
+    return direct + pooled
+
+
+def _normalize_db_url(raw_url: str) -> str:
+    url = raw_url.strip()
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    if "pooler.supabase.com" in url and "pgbouncer=true" in url:
+        non_pooling = os.getenv("POSTGRES_URL_NON_POOLING") or os.getenv("DATABASE_URL") or url
+        if "pooler.supabase.com" not in non_pooling and non_pooling.startswith("postgres"):
+            url = non_pooling
+    if url.startswith("postgresql://") and "?" not in url:
+        url = f"{url}?sslmode=require"
+    return url
+
+
 def _build_engine():
-    db_url = (os.getenv("DATABASE_URL") or "").strip()
-    if db_url and db_url.startswith("postgres"):
-        if db_url.startswith("postgres://"):
-            db_url = db_url.replace("postgres://", "postgresql://", 1)
+    for raw_url in _candidate_db_urls():
+        db_url = _normalize_db_url(raw_url)
+        if not db_url.startswith("postgres"):
+            continue
         try:
-            # If the configured Supabase URL is bad/unreachable, fall back to SQLite
-            # rather than crashing every request in Vercel/serverless.
             test_engine = create_engine(
                 db_url,
                 poolclass=NullPool,
@@ -111,8 +140,10 @@ def _build_engine():
                 conn.execute(sa_text("SELECT 1"))
             return test_engine
         except Exception as exc:
-            print(f"[database] DATABASE_URL unavailable ({exc}); using SQLite fallback.")
-            return _sqlite_engine()
+            print(f"[database] DB URL rejected ({db_url.split('@')[1][:60] if '@' in db_url else db_url[:60]}): {exc}")
+            continue
+
+    print("[database] No valid PostgreSQL URL found; using SQLite fallback.")
     return _sqlite_engine()
 
 
