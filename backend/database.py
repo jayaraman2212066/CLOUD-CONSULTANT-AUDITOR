@@ -82,26 +82,38 @@ class FreeUsage(Base):
 
 # ── Engine selection ──────────────────────────────────────────────────────────
 
-def _build_engine():
-    db_url = os.getenv("DATABASE_URL", "")
-    if db_url and db_url.startswith("postgres"):
-        if db_url.startswith("postgres://"):
-            db_url = db_url.replace("postgres://", "postgresql://", 1)
-        # NullPool avoids pgbouncer prepared-statement issues.
-        # use_native_hstore=False stops psycopg2 from running an OID lookup
-        # query on connect, which crashes on restricted Supabase pooler connections.
-        return create_engine(
-            db_url,
-            poolclass=NullPool,
-            echo=False,
-            connect_args={"options": "-c search_path=public"},
-        )
-    # Fallback: SQLite for local dev
+def _sqlite_engine():
     return create_engine(
         "sqlite:///./database.db",
         connect_args={"check_same_thread": False},
         echo=False,
     )
+
+
+def _build_engine():
+    db_url = (os.getenv("DATABASE_URL") or "").strip()
+    if db_url and db_url.startswith("postgres"):
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+        try:
+            # If the configured Supabase URL is bad/unreachable, fall back to SQLite
+            # rather than crashing every request in Vercel/serverless.
+            test_engine = create_engine(
+                db_url,
+                poolclass=NullPool,
+                echo=False,
+                connect_args={
+                    "options": "-c search_path=public",
+                    "connect_timeout": 3,
+                },
+            )
+            with test_engine.connect() as conn:
+                conn.execute(sa_text("SELECT 1"))
+            return test_engine
+        except Exception as exc:
+            print(f"[database] DATABASE_URL unavailable ({exc}); using SQLite fallback.")
+            return _sqlite_engine()
+    return _sqlite_engine()
 
 
 engine       = _build_engine()
