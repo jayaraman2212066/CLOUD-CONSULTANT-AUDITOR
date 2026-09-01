@@ -21,7 +21,7 @@
 
 .cca-account-button { border: 1px solid var(--cb-border); background: transparent; color: var(--cb-text-primary); padding: 7px 12px; cursor: pointer; font: 600 .78rem var(--cca-font-ui); }
 .cca-account-button:hover { border-color: var(--cb-accent); color: var(--cb-accent); }
-.cca-auth-modal { position: fixed; inset: 0; z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(5,8,18,.72); backdrop-filter: blur(8px); }
+.cca-auth-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(5,8,18,.72); backdrop-filter: blur(8px); }
 .cca-auth-modal.is-open { display: flex; }
 .cca-auth-dialog { position: relative; width: min(430px, 100%); padding: 34px; background: var(--cb-surface); border: 1px solid var(--cb-border-strong); box-shadow: 0 20px 70px rgba(0,0,0,.35); }
 .cca-auth-dialog h2 { margin: 10px 0 8px; color: var(--cb-text-primary); font-size: 1.65rem; }
