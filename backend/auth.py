@@ -352,3 +352,21 @@ def get_auth_context(request: Request, db: Session) -> dict:
     if session:
         return {"tier": session.tier, "session": session, "is_free": False}
     return {"tier": "free", "session": None, "is_free": True}
+
+
+# ── RBAC Authorization ────────────────────────────────────────────────────────
+
+def require_admin(request: Request, db: Session) -> User:
+    """
+    Enforce Role-Based Access Control (RBAC). 
+    Requires the current user to have the 'admin' role.
+    """
+    session = get_account_session(account_token(request), db)
+    if not session or not session.user:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    
+    if session.user.role != "admin":
+        logger.warning(f"Unauthorized admin access attempt by user: {session.user.email}")
+        raise HTTPException(status_code=403, detail="Forbidden: Admin access required.")
+        
+    return session.user

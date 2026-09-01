@@ -19,6 +19,7 @@ class User(Base):
     email         = Column(String, unique=True, nullable=False, index=True)
     provider      = Column(String, nullable=False)
     password_hash = Column(String, nullable=True)
+    role          = Column(String, default="user", nullable=False) # Role-based authorization
     trial_used    = Column(Boolean, default=False, nullable=False)
     credits       = Column(Integer, default=0, nullable=False)
     created_at    = Column(DateTime, default=datetime.utcnow, nullable=False)

@@ -99,24 +99,38 @@ async def general_exc_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500,
                         content={"detail": f"Internal server error: {str(exc)}"})
 
-# ── Rate limiter (20 req/min per IP) ─────────────────────────────────────────
+# ── Rate limiter ────────────────────────────────────────────────────────────────
 _rate_store: dict = defaultdict(list)
+_auth_rate_store: dict = defaultdict(list)
 _rate_store_last_clean = 0.0
 
-def rate_limit(request: Request):
+def _clean_rate_store(now: float):
     global _rate_store_last_clean
+    if now - _rate_store_last_clean > 300:
+        for store in (_rate_store, _auth_rate_store):
+            stale = [k for k, v in store.items() if not any(now - t < 60 for t in v)]
+            for k in stale:
+                del store[k]
+        _rate_store_last_clean = now
+
+def rate_limit(request: Request):
     ip  = request.client.host if request.client else "unknown"
     now = time.time()
-    # Evict stale IPs every 5 minutes to prevent unbounded memory growth
-    if now - _rate_store_last_clean > 300:
-        stale = [k for k, v in _rate_store.items() if not any(now - t < 60 for t in v)]
-        for k in stale:
-            del _rate_store[k]
-        _rate_store_last_clean = now
+    _clean_rate_store(now)
     _rate_store[ip] = [t for t in _rate_store[ip] if now - t < 60]
     if len(_rate_store[ip]) >= 20:
         raise HTTPException(429, "Rate limit exceeded. Try again in 1 minute.")
     _rate_store[ip].append(now)
+
+def auth_rate_limit(request: Request):
+    """Stricter rate limit (5 req/min) for login/signup endpoints."""
+    ip  = request.client.host if request.client else "unknown"
+    now = time.time()
+    _clean_rate_store(now)
+    _auth_rate_store[ip] = [t for t in _auth_rate_store[ip] if now - t < 60]
+    if len(_auth_rate_store[ip]) >= 5:
+        raise HTTPException(429, "Too many authentication attempts. Try again in 1 minute.")
+    _auth_rate_store[ip].append(now)
 
 # ── Validators ────────────────────────────────────────────────────────────────
 _MAX_JSON_MB_FREE = int(os.getenv("MAX_JSON_MB_FREE", "50"))
@@ -394,7 +408,7 @@ def _account_response(user, token: str):
 
 
 @app.post("/account/signup")
-async def account_signup(request: Request, _=Depends(rate_limit)):
+async def account_signup(request: Request, _=Depends(auth_rate_limit)):
     try:
         body = await request.json()
     except Exception:
@@ -419,7 +433,7 @@ async def account_signup(request: Request, _=Depends(rate_limit)):
 
 
 @app.post("/account/login")
-async def account_login(request: Request, _=Depends(rate_limit)):
+async def account_login(request: Request, _=Depends(auth_rate_limit)):
     try:
         body = await request.json()
     except Exception:
@@ -481,6 +495,27 @@ def account_history(request: Request):
             "severity": json.loads(row.severity_counts),
             "date": row.created_at.isoformat(),
         } for row in rows]})
+    finally:
+        db.close()
+
+
+@app.get("/admin/users")
+def admin_list_users(request: Request):
+    """Admin-only endpoint to list all users in the system."""
+    db = SessionLocal()
+    try:
+        from auth import require_admin
+        # Enforce RBAC (raises 401/403 if unauthorized)
+        admin_user = require_admin(request, db)
+        
+        users = db.query(User).order_by(User.created_at.desc()).all()
+        return JSONResponse({"users": [{
+            "id": u.id,
+            "email": u.email,
+            "role": u.role,
+            "provider": u.provider,
+            "created_at": u.created_at.isoformat(),
+        } for u in users]})
     finally:
         db.close()
 
