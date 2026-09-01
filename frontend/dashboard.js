@@ -116,6 +116,13 @@ function openAuthModal(mode = 'login') {
   updateAuthModal();
   const modal = document.getElementById('cca-auth-modal');
   if (modal) { 
+    // Force inline styles to bypass any Vercel/browser cache CSS issues
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(5,8,18,0.85); backdrop-filter: blur(8px); box-sizing: border-box; padding: 20px;';
+    const dialog = modal.querySelector('.cca-auth-dialog');
+    if (dialog) {
+      dialog.style.cssText = 'position: relative; width: 100%; max-width: 430px; padding: 34px; background: var(--cb-surface, #0A1025); border: 1px solid var(--cb-border-strong, #1B2D55); border-radius: 12px; box-shadow: 0 20px 70px rgba(0,0,0,0.5); z-index: 1000000; box-sizing: border-box;';
+    }
+    
     modal.classList.add('is-open'); 
     modal.setAttribute('aria-hidden', 'false'); 
     document.getElementById('cca-auth-email')?.focus(); 
@@ -139,7 +146,11 @@ function openAuthModal(mode = 'login') {
 
 function closeAuthModal() {
   const modal = document.getElementById('cca-auth-modal');
-  if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }
+  if (modal) {
+    modal.classList.remove('is-open');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  }
 }
 
 function switchAuthMode() { authMode = authMode === 'login' ? 'signup' : 'login'; updateAuthModal(); }
@@ -2136,29 +2147,30 @@ if (mainScrollArea && header) {
 }
 
 // 3. Command Palette Logic
-const cmdBackdrop = document.getElementById('cb-command-palette-backdrop');
-const cmdInput = document.getElementById('cb-cmd-input');
+function getCmdBackdrop() { return document.getElementById('cb-command-palette-backdrop'); }
+function getCmdInput() { return document.getElementById('cb-cmd-input'); }
 
 function toggleCommandPalette() {
-  if (!cmdBackdrop) return;
-  const isOpen = cmdBackdrop.classList.contains('open');
+  const backdrop = getCmdBackdrop();
+  const input = getCmdInput();
+  if (!backdrop) return;
+  const isOpen = backdrop.classList.contains('open');
   if (isOpen) {
-    cmdBackdrop.classList.remove('open');
+    backdrop.classList.remove('open');
   } else {
-    cmdBackdrop.classList.add('open');
-    if (cmdInput) {
-      cmdInput.value = '';
-      setTimeout(() => cmdInput.focus(), 50);
+    backdrop.classList.add('open');
+    if (input) {
+      input.value = '';
+      setTimeout(() => input.focus(), 50);
     }
   }
 }
 
 // Command palette backdrop click to close
-if (cmdBackdrop) {
-  cmdBackdrop.addEventListener('click', (e) => {
-    if (e.target === cmdBackdrop) toggleCommandPalette();
-  });
-}
+document.addEventListener('click', (e) => {
+  const backdrop = getCmdBackdrop();
+  if (backdrop && e.target === backdrop) toggleCommandPalette();
+});
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
@@ -2176,7 +2188,8 @@ document.addEventListener('keydown', e => {
 
   // Close command palette on Escape
   if (e.key === 'Escape') {
-    if (cmdBackdrop && cmdBackdrop.classList.contains('open')) {
+    const backdrop = getCmdBackdrop();
+    if (backdrop && backdrop.classList.contains('open')) {
       toggleCommandPalette();
     }
   }

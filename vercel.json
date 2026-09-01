@@ -55,7 +55,7 @@
     },
     {
       "src": "/agent-avatar.png",
-      "dest": "/outputs/agent-avatar.png"
+      "dest": "/frontend/agent-avatar.png"
     },
     {
       "src": "/dashboard.html",
