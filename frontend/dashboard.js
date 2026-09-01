@@ -66,7 +66,151 @@ document.addEventListener('DOMContentLoaded', () => {
   loadHistory();
   restoreBranding();
   updateFreeBanner();
+  initAgent();
+  initLandingMotion();
 });
+
+function initLandingMotion() {
+  const sections = document.querySelectorAll('.cca-proof-strip, .cca-workflow');
+  if (!('IntersectionObserver' in window)) {
+    sections.forEach(section => section.classList.add('is-visible'));
+    return;
+  }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
+    });
+  }, { threshold: 0.12 });
+  sections.forEach(section => observer.observe(section));
+}
+
+// ── Embedded Gemini agent ────────────────────────────────────────────
+const agentMessages = [];
+let agentRecognition = null;
+let agentVoiceEnabled = localStorage.getItem('cca_agent_voice') === '1';
+
+function initAgent() {
+  const send = document.getElementById('cca-agent-send');
+  const input = document.getElementById('cca-agent-input');
+  const mic = document.getElementById('cca-agent-mic');
+  const voice = document.getElementById('cca-agent-voice');
+  if (!send || !input) return;
+  toggleAgentPanel(false);
+  updateAgentVoiceButton();
+  send.addEventListener('click', () => sendAgentMessage());
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendAgentMessage(); }
+  });
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition || !mic) { if (mic) mic.disabled = true; return; }
+  agentRecognition = new SpeechRecognition();
+  agentRecognition.lang = document.documentElement.lang || 'en-US';
+  agentRecognition.interimResults = false;
+  agentRecognition.onstart = () => { mic.classList.add('active'); setAgentStatus('Listening...'); };
+  agentRecognition.onend = () => { mic.classList.remove('active'); setAgentStatus('Ready'); };
+  agentRecognition.onerror = () => { mic.classList.remove('active'); setAgentStatus('Voice unavailable'); };
+  agentRecognition.onresult = event => {
+    input.value = event.results[0][0].transcript;
+    sendAgentMessage();
+  };
+  mic.addEventListener('click', () => {
+    toggleAgentPanel(true);
+    try { agentRecognition.start(); } catch (_) { /* recognition already active */ }
+  });
+}
+
+function toggleAgentPanel(forceOpen) {
+  const panel = document.getElementById('cca-agent');
+  const launcher = document.getElementById('cca-agent-launcher');
+  if (!panel || !launcher) return;
+  const open = typeof forceOpen === 'boolean' ? forceOpen : !panel.classList.contains('is-open');
+  panel.classList.toggle('is-open', open);
+  panel.setAttribute('aria-hidden', String(!open));
+  launcher.setAttribute('aria-expanded', String(open));
+  launcher.style.display = open ? 'none' : 'inline-flex';
+  if (open) document.getElementById('cca-agent-input')?.focus();
+}
+
+function updateAgentVoiceButton() {
+  const voice = document.getElementById('cca-agent-voice');
+  if (!voice) return;
+  voice.classList.toggle('active', agentVoiceEnabled);
+  voice.setAttribute('aria-pressed', String(agentVoiceEnabled));
+  voice.setAttribute('aria-label', agentVoiceEnabled ? 'Disable AI voice' : 'Enable AI voice');
+  voice.textContent = `AI voice: ${agentVoiceEnabled ? 'On' : 'Off'}`;
+}
+
+function toggleAgentVoice() {
+  agentVoiceEnabled = !agentVoiceEnabled;
+  localStorage.setItem('cca_agent_voice', agentVoiceEnabled ? '1' : '0');
+  if (!agentVoiceEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+  updateAgentVoiceButton();
+}
+
+function setAgentStatus(value) { const el = document.getElementById('cca-agent-status'); if (el) el.textContent = value; }
+
+function agentContext() {
+  return {
+    company: document.getElementById('companyName')?.value || 'AWS Account',
+    loaded: rawFindings.length > 0,
+    finding_count: rawFindings.length,
+    visible_count: filteredFindings.length,
+    exceptions: exceptions.size,
+    score: document.getElementById('metricScore')?.textContent || null,
+    critical: document.getElementById('metricCritical')?.textContent || null,
+    high: document.getElementById('metricHigh')?.textContent || null,
+    current_panel: document.querySelector('.cb-panel.active')?.id?.replace('panel-', '') || 'upload',
+  };
+}
+
+function addAgentMessage(text, role) {
+  const list = document.getElementById('cca-agent-messages');
+  if (!list) return;
+  const item = document.createElement('div');
+  item.className = `cca-agent-message ${role}`;
+  item.textContent = text;
+  list.appendChild(item);
+  list.scrollTop = list.scrollHeight;
+}
+
+function runAgentAction(action) {
+  const actions = {
+    upload: () => navigateTo('upload'), dashboard: () => navigateTo('dashboard'),
+    findings: () => navigateTo('findings'), iac: () => navigateTo('iac'),
+    analyse: () => previewFindings(), generate_report: () => generateReport(),
+    generate_ultimate: () => generateUltimateReport(), export_csv: () => exportCSV(),
+    export_bundle: () => exportBundle(),
+  };
+  if (actions[action]) actions[action]();
+}
+
+async function sendAgentMessage() {
+  const input = document.getElementById('cca-agent-input');
+  const send = document.getElementById('cca-agent-send');
+  const text = input?.value.trim();
+  if (!text || !send) return;
+  input.value = '';
+  agentMessages.push({ role: 'user', text });
+  addAgentMessage(text, 'user');
+  send.disabled = true;
+  setAgentStatus('Thinking...');
+  try {
+    const response = await authFetch(`${API_BASE}/agent/chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: agentMessages.slice(-12), context: agentContext() }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Agent unavailable');
+    agentMessages.push({ role: 'assistant', text: data.message });
+    addAgentMessage(data.message, 'agent');
+    if (data.action) runAgentAction(data.action);
+    if (agentVoiceEnabled && window.speechSynthesis && data.message) {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(data.message));
+    }
+  } catch (error) { addAgentMessage(error.message, 'agent'); }
+  finally { send.disabled = false; setAgentStatus('Ready'); }
+}
 
 // ── Restore branding from localStorage ───────────────────────────────
 function restoreBranding() {

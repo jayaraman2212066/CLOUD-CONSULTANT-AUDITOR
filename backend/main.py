@@ -39,6 +39,9 @@ from auth import (
 from polar_webhook import handle_polar_webhook
 import sqlalchemy
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -133,6 +136,79 @@ def _validate_color(c: str) -> str:
 def _validate_company(name: str) -> str:
     name = name.strip()[:80]
     return "".join(ch for ch in name if ch.isalnum() or ch in " .,&-_()") or "AWS Account"
+
+
+@app.post("/agent/chat")
+async def agent_chat(request: Request, _=Depends(rate_limit)):
+    """Answer bounded auditor questions and return an allowlisted UI action."""
+    if not GEMINI_API_KEY:
+        raise HTTPException(503, "AI agent is not configured. Set GEMINI_API_KEY on the server.")
+
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "JSON body required.")
+
+    messages = body.get("messages", [])
+    context = body.get("context", {})
+    if not isinstance(messages, list) or not isinstance(context, dict):
+        raise HTTPException(422, "messages and context must be objects.")
+
+    safe_messages = []
+    for message in messages[-12:]:
+        if not isinstance(message, dict):
+            continue
+        role = "model" if message.get("role") == "assistant" else "user"
+        text = str(message.get("text", "")).strip()[:2000]
+        if text:
+            safe_messages.append({"role": role, "parts": [{"text": text}]})
+    if not safe_messages:
+        raise HTTPException(422, "At least one message is required.")
+
+    prompt = (
+        "You are CloudConsultant Auditor Agent, a concise AWS security analyst embedded "
+        "inside a report dashboard. Use only the supplied audit context. Do not claim to "
+        "have executed AWS changes or accessed cloud accounts. Return ONLY valid JSON with "
+        "exactly two keys: message (string) and action (one of null, upload, dashboard, "
+        "findings, iac, analyse, generate_report, generate_ultimate, export_csv, export_bundle). "
+        "Choose an action only when the user's request clearly asks for it. Actions trigger "
+        "existing local UI workflows and never modify AWS. Keep message under 600 characters.\n\n"
+        f"Audit context: {json.dumps(context, ensure_ascii=True)[:12000]}"
+    )
+    payload = {
+        "system_instruction": {"parts": [{"text": prompt}]},
+        "contents": safe_messages,
+        "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
+    }
+
+    import httpx
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(
+                url,
+                headers={"x-goog-api-key": GEMINI_API_KEY},
+                json=payload,
+            )
+        if response.status_code != 200:
+            logger.warning("Gemini request failed with status %s: %s", response.status_code, response.text[:300])
+            raise HTTPException(502, "The AI agent is temporarily unavailable.")
+        candidate = response.json().get("candidates", [{}])[0]
+        text = "".join(part.get("text", "") for part in candidate.get("content", {}).get("parts", []))
+        result = json.loads(text)
+    except HTTPException:
+        raise
+    except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError):
+        logger.exception("Gemini response could not be processed")
+        raise HTTPException(502, "The AI agent returned an invalid response.")
+
+    actions = {None, "upload", "dashboard", "findings", "iac", "analyse",
+               "generate_report", "generate_ultimate", "export_csv", "export_bundle"}
+    action = result.get("action") if isinstance(result, dict) else None
+    if action not in actions:
+        action = None
+    message = str(result.get("message", "I could not determine the next step."))[:600]
+    return JSONResponse({"message": message, "action": action})
 
 # ── History helpers ───────────────────────────────────────────────────────────
 def _history_key(company: str) -> str:
@@ -236,6 +312,11 @@ def serve_logo():
 @app.get("/logo-full.png")
 def serve_logo_full():
     p = BASE_DIR / "outputs" / "J-AI-FINAL.png"
+    return FileResponse(p, media_type="image/png") if p.exists() else HTMLResponse("", 404)
+
+@app.get("/agent-avatar.png")
+def serve_agent_avatar():
+    p = BASE_DIR / "outputs" / "agent-avatar.png"
     return FileResponse(p, media_type="image/png") if p.exists() else HTMLResponse("", 404)
 
 @app.get("/favicon.ico")

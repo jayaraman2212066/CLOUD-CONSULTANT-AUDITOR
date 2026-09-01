@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- App styles -->
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
   <style>
     /* CRITICAL LAYOUT — inline so it always applies */
     html, body { margin: 0; padding: 0; height: 100%; }
@@ -425,11 +425,45 @@
         <!-- Toast container -->
         <div class="cb-toast-container" id="cb-toasts" aria-live="polite" aria-atomic="false"></div>
 
+        <button class="cca-agent-launcher" id="cca-agent-launcher" type="button" aria-label="Open Auditor Agent" aria-expanded="false" onclick="toggleAgentPanel()">
+          <img src="/agent-avatar.png" alt="">
+          <span>Auditor Agent</span>
+          <i></i>
+        </button>
+
+        <aside class="cca-agent" id="cca-agent" aria-label="CloudConsultant Auditor agent" aria-hidden="true">
+          <div class="cca-agent-head">
+            <div>
+              <div class="cca-agent-identity"><img src="/agent-avatar.png" alt=""><span class="cca-agent-kicker">AUDITOR AGENT</span></div>
+              <h2>Ask your security copilot</h2>
+            </div>
+            <div class="cca-agent-head-actions"><span class="cca-agent-status" id="cca-agent-status">Ready</span><button type="button" class="cca-agent-close" aria-label="Close Auditor Agent" onclick="toggleAgentPanel(false)">×</button></div>
+          </div>
+          <div class="cca-agent-messages" id="cca-agent-messages" aria-live="polite">
+            <div class="cca-agent-message agent">Upload a scan, then ask me to explain findings, inspect risk, or prepare a report.</div>
+          </div>
+          <div class="cca-agent-compose">
+            <textarea id="cca-agent-input" rows="2" maxlength="2000"
+                      placeholder="Ask about this audit..." aria-label="Message the auditor agent"></textarea>
+            <div class="cca-agent-actions">
+              <button class="cca-agent-mic" id="cca-agent-mic" type="button" aria-label="Start voice input" title="Voice input">Mic</button>
+              <button class="cca-agent-voice" id="cca-agent-voice" type="button" aria-pressed="false" aria-label="Enable AI voice" title="AI voice output" onclick="toggleAgentVoice()">AI voice: Off</button>
+              <button class="cb-btn cb-btn-primary cca-agent-send" id="cca-agent-send" type="button">Send</button>
+            </div>
+          </div>
+        </aside>
+
 
         <!-- ═══════════════════════════════════════════════════════
              PANEL 1 — UPLOAD & CONFIGURE
              ═══════════════════════════════════════════════════════ -->
         <section id="panel-upload" class="cb-panel active" aria-label="Upload and configure">
+
+          <div class="cca-announcement" role="status">
+            <span class="cca-announcement-dot"></span>
+            <span>New: voice-enabled audit workflows</span>
+            <button type="button" onclick="document.getElementById('cca-agent-input')?.focus()">Ask the agent <span aria-hidden="true">→</span></button>
+          </div>
 
           <!-- Hero (shown before file loaded) -->
           <div class="cb-upload-hero" id="upload-hero">
@@ -470,6 +504,13 @@
               <svg width="12" height="12" aria-hidden="true"><use href="#ic-shield"/></svg>
               No data retained
             </span>
+          </div>
+
+          <div class="cca-proof-strip" aria-label="Platform capabilities">
+            <div><strong>337+</strong><span>security checks mapped</span></div>
+            <div><strong>5</strong><span>compliance frameworks</span></div>
+            <div><strong>3</strong><span>remediation formats</span></div>
+            <div><strong>0</strong><span>cloud changes made</span></div>
           </div>
 
           <!-- File selected state -->
@@ -574,6 +615,24 @@
             </div>
 
           </div><!-- /config-panel -->
+
+          <section class="cca-workflow" aria-label="Audit workflow">
+            <div class="cca-section-heading">
+              <span class="cca-eyebrow">FROM SCAN TO ACTION</span>
+              <h2>Make every finding<br>move forward.</h2>
+            </div>
+            <div class="cca-workflow-grid">
+              <button type="button" class="cca-workflow-card" onclick="document.getElementById('fileInput')?.click()">
+                <span class="cca-step">01</span><strong>Ingest the evidence</strong><span>Drop in Prowler or ScoutSuite JSON and keep the raw scan in your control.</span><em>Upload a scan →</em>
+              </button>
+              <button type="button" class="cca-workflow-card" onclick="navigateTo('dashboard')">
+                <span class="cca-step">02</span><strong>See the exposure</strong><span>Risk scoring, service concentration, compliance context, and trend in one view.</span><em>Open dashboard →</em>
+              </button>
+              <button type="button" class="cca-workflow-card" onclick="navigateTo('iac')">
+                <span class="cca-step">03</span><strong>Ship the fix</strong><span>Turn prioritized findings into practical CLI, Terraform, and CloudFormation guidance.</span><em>Explore remediation →</em>
+              </button>
+            </div>
+          </section>
 
         </section>
 
@@ -1584,7 +1643,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-<script src="dashboard.js?v=4"></script>
+<script src="dashboard.js?v=5"></script>
 
 </body>
 </html>

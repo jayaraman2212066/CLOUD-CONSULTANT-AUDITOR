@@ -19,6 +19,7 @@ Turn Prowler JSON into a boardroom-ready security report in seconds.
 - **IaC Viewer** — AWS CLI, Terraform, CloudFormation remediation snippets
 - **CSV export** and **Evidence Bundle** (ZIP: PDF + CSV + README)
 - **Trend history** — security score tracking across scans
+- **Embedded voice agent** — Gemini-powered audit guidance with browser voice input/output
 - **Free tier** — 3 lifetime analyses, no signup required
 - **License key** activation via Polar.sh
 
@@ -87,6 +88,8 @@ Copy `backend/.env.example` to `backend/.env` and fill in:
 | `MAX_JSON_MB` | Max upload size in MB (default: 50) |
 | `FREE_TIER_LIMIT` | Free analyses per device (default: 3) |
 | `SESSION_SECRET` | Random secret for session signing |
+| `GEMINI_API_KEY` | Google AI Studio key for the embedded agent; keep server-side |
+| `GEMINI_MODEL` | Gemini model name (default: `gemini-3.6-flash`) |
 
 ---
 

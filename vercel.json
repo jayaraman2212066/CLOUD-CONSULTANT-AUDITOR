@@ -12,7 +12,7 @@
       "dest": "api/index.py"
     },
     {
-      "src": "/(health|ready|license|checkout|webhooks|preview-findings|generate-report|generate-ultimate-report|iac-snippet|download-script|export-csv|export-bundle|export-json|trend-history)(.*)",
+      "src": "/(health|ready|license|checkout|webhooks|agent|preview-findings|generate-report|generate-ultimate-report|iac-snippet|download-script|export-csv|export-bundle|export-json|trend-history)(.*)",
       "dest": "api/index.py"
     },
     {
@@ -52,6 +52,10 @@
     {
       "src": "/logo-full.png",
       "dest": "/outputs/J-AI-FINAL.png"
+    },
+    {
+      "src": "/agent-avatar.png",
+      "dest": "/outputs/agent-avatar.png"
     },
     {
       "src": "/dashboard.html",
