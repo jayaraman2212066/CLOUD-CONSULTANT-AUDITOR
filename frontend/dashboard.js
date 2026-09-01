@@ -157,6 +157,13 @@ async function submitAuth(event) {
   } catch (error) { if (message) message.textContent = error.message; }
 }
 
+function handleGoogleSignIn() {
+  const message = document.getElementById('cca-auth-message');
+  if (message) {
+    message.textContent = 'Google Sign-in is not configured on this environment. Please use email and password, or configure GOOGLE_CLIENT_ID in the backend.';
+  }
+}
+
 async function logoutAccount() {
   await fetch(`${API_BASE}/account/logout`, { method: 'POST', credentials: 'same-origin' });
   const button = document.getElementById('cca-account-button');
