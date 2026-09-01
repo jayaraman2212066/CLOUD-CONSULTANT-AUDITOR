@@ -18,12 +18,14 @@ class User(Base):
     id            = Column(Integer, primary_key=True, autoincrement=True)
     email         = Column(String, unique=True, nullable=False, index=True)
     provider      = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)
     trial_used    = Column(Boolean, default=False, nullable=False)
     credits       = Column(Integer, default=0, nullable=False)
     created_at    = Column(DateTime, default=datetime.utcnow, nullable=False)
     transactions  = relationship("CreditTransaction", back_populates="user")
     license_keys  = relationship("LicenseKey", back_populates="user")
     sessions      = relationship("UserSession", back_populates="user")
+    account_sessions = relationship("AccountSession", back_populates="user")
 
 
 class CreditTransaction(Base):
@@ -70,6 +72,17 @@ class UserSession(Base):
     license_key    = relationship("LicenseKey", back_populates="sessions")
 
 
+class AccountSession(Base):
+    """Short-lived HttpOnly sessions for email/password accounts."""
+    __tablename__ = "account_sessions"
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    token_hash = Column(String, unique=True, nullable=False, index=True)
+    user_id    = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    user       = relationship("User", back_populates="account_sessions")
+
+
 class FreeUsage(Base):
     """Tracks free-tier usage by fingerprint (no account required)."""
     __tablename__ = "free_usage"
@@ -78,6 +91,18 @@ class FreeUsage(Base):
     used         = Column(Boolean, default=False, nullable=False)
     uses_count   = Column(Integer, default=0, nullable=False, server_default="0")
     created_at   = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class ReportHistory(Base):
+    """Account-scoped scan summaries; raw findings are never stored here."""
+    __tablename__ = "report_history"
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    user_id         = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    company_name    = Column(String, nullable=False)
+    security_score  = Column(Integer, nullable=False)
+    grade           = Column(String, nullable=False)
+    severity_counts = Column(Text, nullable=False, default="{}")
+    created_at      = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 # ── Engine selection ──────────────────────────────────────────────────────────
@@ -155,7 +180,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     # Migrate: add uses_count column to free_usage if it doesn't exist
     db_url = os.getenv("DATABASE_URL", "")
-    is_postgres = db_url.startswith("postgres")
+    is_postgres = str(engine.url).startswith("postgres")
     try:
         with engine.connect() as conn:
             if is_postgres:
@@ -169,6 +194,13 @@ def init_db():
                         "ALTER TABLE free_usage ADD COLUMN uses_count INTEGER NOT NULL DEFAULT 0"
                     ))
                     conn.commit()
+                result = conn.execute(sa_text(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name='users' AND column_name='password_hash'"
+                ))
+                if result.fetchone() is None:
+                    conn.execute(sa_text("ALTER TABLE users ADD COLUMN password_hash VARCHAR"))
+                    conn.commit()
             else:
                 # SQLite: use PRAGMA
                 cols = [r[1] for r in conn.execute(sa_text("PRAGMA table_info(free_usage)")).fetchall()]
@@ -176,6 +208,10 @@ def init_db():
                     conn.execute(sa_text(
                         "ALTER TABLE free_usage ADD COLUMN uses_count INTEGER NOT NULL DEFAULT 0"
                     ))
+                    conn.commit()
+                user_cols = [r[1] for r in conn.execute(sa_text("PRAGMA table_info(users)")).fetchall()]
+                if "password_hash" not in user_cols:
+                    conn.execute(sa_text("ALTER TABLE users ADD COLUMN password_hash VARCHAR"))
                     conn.commit()
     except Exception:
         pass  # table doesn't exist yet — create_all handles it

@@ -30,11 +30,12 @@ from services.pdf_generator_ultimate import generate_pdf_ultimate
 from services.cost_estimator import estimate_costs
 from services.iac_templates import get_all_formats
 from services.script_builder import build_script
-from database import init_db, SessionLocal
+from database import init_db, SessionLocal, User, ReportHistory
 from auth import (
     check_free_tier, consume_free_tier,
     activate_license_key, get_session,
     enforce_report_limit, _reports_remaining,
+    hash_password, verify_password, create_account_session, get_account_session, account_token,
 )
 from polar_webhook import handle_polar_webhook
 import sqlalchemy
@@ -244,6 +245,20 @@ def _load_history(company: str) -> list:
     except Exception:
         return []
 
+
+def _save_account_history(request: Request, db, company: str, risk: dict, severity: dict):
+    session = get_account_session(account_token(request), db)
+    if not session:
+        return
+    db.add(ReportHistory(
+        user_id=session.user_id,
+        company_name=company,
+        security_score=int(risk.get("score", 0)),
+        grade=str(risk.get("grade", "F")),
+        severity_counts=json.dumps(severity),
+    ))
+    db.commit()
+
 # ── Shared upload parser ──────────────────────────────────────────────────────
 async def _parse_upload(file: UploadFile, max_mb: int = _MAX_JSON_MB_FREE) -> tuple:
     if not file.filename or not file.filename.lower().endswith(".json"):
@@ -368,6 +383,106 @@ def ready():
 # =============================================================================
 # AUTH ENDPOINTS
 # =============================================================================
+
+def _account_response(user, token: str):
+    response = JSONResponse({"authenticated": True, "email": user.email,
+                             "display_name": user.email.split("@", 1)[0]})
+    response.set_cookie("account_token", token, max_age=7 * 24 * 3600,
+                        httponly=True, secure=os.getenv("ENVIRONMENT") == "production",
+                        samesite="lax", path="/")
+    return response
+
+
+@app.post("/account/signup")
+async def account_signup(request: Request, _=Depends(rate_limit)):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "JSON body required.")
+    email = str(body.get("email", "")).strip().lower()
+    password = str(body.get("password", ""))
+    if "@" not in email or len(email) > 254:
+        raise HTTPException(400, "Enter a valid email address.")
+    if len(password) < 8 or len(password) > 128:
+        raise HTTPException(400, "Password must be 8 to 128 characters.")
+    db = SessionLocal()
+    try:
+        if db.query(User).filter_by(email=email).first():
+            raise HTTPException(409, "An account already exists for this email.")
+        user = User(email=email, provider="password", password_hash=hash_password(password))
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return _account_response(user, create_account_session(user, db))
+    finally:
+        db.close()
+
+
+@app.post("/account/login")
+async def account_login(request: Request, _=Depends(rate_limit)):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "JSON body required.")
+    email = str(body.get("email", "")).strip().lower()
+    password = str(body.get("password", ""))
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter_by(email=email).first()
+        if not user or not user.password_hash or not verify_password(password, user.password_hash):
+            raise HTTPException(401, "Email or password is incorrect.")
+        return _account_response(user, create_account_session(user, db))
+    finally:
+        db.close()
+
+
+@app.get("/account/me")
+def account_me(request: Request):
+    db = SessionLocal()
+    try:
+        session = get_account_session(account_token(request), db)
+        if not session:
+            return JSONResponse({"authenticated": False})
+        return JSONResponse({"authenticated": True, "email": session.user.email,
+                             "display_name": session.user.email.split("@", 1)[0]})
+    finally:
+        db.close()
+
+
+@app.post("/account/logout")
+def account_logout(request: Request):
+    db = SessionLocal()
+    try:
+        session = get_account_session(account_token(request), db)
+        if session:
+            db.delete(session)
+            db.commit()
+    finally:
+        db.close()
+    response = JSONResponse({"authenticated": False})
+    response.delete_cookie("account_token", path="/")
+    return response
+
+
+@app.get("/account/history")
+def account_history(request: Request):
+    db = SessionLocal()
+    try:
+        session = get_account_session(account_token(request), db)
+        if not session:
+            raise HTTPException(401, "Sign in to view saved history.")
+        rows = (db.query(ReportHistory)
+                .filter_by(user_id=session.user_id)
+                .order_by(ReportHistory.created_at.desc()).limit(50).all())
+        return JSONResponse({"history": [{
+            "company_name": row.company_name,
+            "score": row.security_score,
+            "grade": row.grade,
+            "severity": json.loads(row.severity_counts),
+            "date": row.created_at.isoformat(),
+        } for row in rows]})
+    finally:
+        db.close()
 
 @app.post("/license/activate")
 async def license_activate(request: Request):
@@ -612,6 +727,7 @@ async def generate_report(
             primary_color=primary_color, logo_bytes=logo_bytes,
             costs=costs, trend=trend, exceptions=exc_f, theme=theme,
         )
+        _save_account_history(request, db, company_name, risk, severity)
 
         if not session:
             consume_free_tier(request, db)
@@ -670,6 +786,7 @@ async def generate_ultimate_report(
             primary_color=primary_color, logo_bytes=logo_bytes,
             account_id=account_id, date_str=datetime.now().strftime("%B %d, %Y"),
         )
+        _save_account_history(request, db, company_name, risk, severity)
 
         if not session:
             consume_free_tier(request, db)
@@ -794,6 +911,7 @@ async def export_bundle(
             primary_color=primary_color, logo_bytes=logo_bytes,
             costs=costs, trend=None, exceptions=[], theme="corporate",
         )
+        _save_account_history(request, db, company_name, risk, severity)
 
         buf    = io.StringIO(newline="")
         writer = csv.writer(buf, quoting=csv.QUOTE_ALL, escapechar="\\")

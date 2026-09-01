@@ -5,6 +5,42 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+:root {
+  --cca-bg: #0E1323;
+  --cca-surface: #141A2E;
+  --cca-surface-raised: #1B2238;
+  --cca-border: #262E48;
+  --cca-text: #EEF1F8;
+  --cca-muted: #8D96B3;
+  --cca-violet: #7C5CFC;
+  --cca-violet-hover: #6B4CE0;
+  --cca-font-display: 'Space Grotesk', sans-serif;
+  --cca-font-ui: 'IBM Plex Sans', sans-serif;
+  --cca-font-mono: 'IBM Plex Mono', monospace;
+}
+
+.cca-account-button { border: 1px solid var(--cb-border); background: transparent; color: var(--cb-text-primary); padding: 7px 12px; cursor: pointer; font: 600 .78rem var(--cca-font-ui); }
+.cca-account-button:hover { border-color: var(--cb-accent); color: var(--cb-accent); }
+.cca-auth-modal { position: fixed; inset: 0; z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(5,8,18,.72); backdrop-filter: blur(8px); }
+.cca-auth-modal.is-open { display: flex; }
+.cca-auth-dialog { position: relative; width: min(430px, 100%); padding: 34px; background: var(--cb-surface); border: 1px solid var(--cb-border-strong); box-shadow: 0 20px 70px rgba(0,0,0,.35); }
+.cca-auth-dialog h2 { margin: 10px 0 8px; color: var(--cb-text-primary); font-size: 1.65rem; }
+.cca-auth-dialog p { margin: 0 0 22px; color: var(--cb-text-secondary); line-height: 1.5; }
+.cca-auth-dialog form { display: grid; gap: 8px; }
+.cca-auth-dialog form .cb-label:not(:first-child) { margin-top: 8px; }
+.cca-auth-dialog form .cb-btn { margin-top: 12px; justify-content: center; }
+.cca-auth-close { position: absolute; top: 12px; right: 15px; border: 0; background: transparent; color: var(--cb-text-secondary); font-size: 1.5rem; cursor: pointer; }
+.cca-auth-switch { width: 100%; margin-top: 16px; border: 0; background: transparent; color: var(--cb-accent); cursor: pointer; font: .8rem var(--cca-font-ui); }
+.cca-auth-message { min-height: 20px; margin-top: 12px; color: var(--cb-text-secondary); font-size: .8rem; }
+.cca-history-panel { margin-bottom: 18px; }
+.cca-history-list { display: grid; gap: 8px; margin-top: 16px; }
+.cca-history-item { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--cb-border); color: var(--cb-text-secondary); font-size: .8rem; }
+.cca-history-item strong { color: var(--cb-text-primary); }
+
+body { font-family: var(--cca-font-ui); }
+h1, h2, h3, h4, .cb-section-heading, .cb-upload-hero-title { font-family: var(--cca-font-display); }
+code, pre, .cb-td-mono, input[id*="Key"], input[id*="Color"] { font-family: var(--cca-font-mono); }
+
 html { overflow-x: hidden; }
 body { min-width: 0; overflow-x: hidden; }
 

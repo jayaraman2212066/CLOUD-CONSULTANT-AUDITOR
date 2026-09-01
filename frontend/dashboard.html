@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
   <!-- Prism.js syntax highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
@@ -122,7 +122,7 @@
   </style>
 </head>
 
-<body data-theme="corporate">
+<body data-theme="dark">
 
 <!-- SVG icon sprite -->
 <div style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
@@ -258,6 +258,10 @@
 
     <!-- Right controls -->
     <div class="cb-header-right">
+
+      <div class="cca-account" id="cca-account">
+        <button class="cca-account-button" id="cca-account-button" type="button" onclick="openAuthModal('login')">Log in</button>
+      </div>
 
       <!-- License pill -->
       <button class="cb-license-pill free" id="cb-license-pill"
@@ -1220,6 +1224,13 @@
 
           <h2 class="cb-section-heading">Settings</h2>
 
+          <div class="cb-card cca-history-panel">
+            <div class="cb-settings-title">Saved audit history</div>
+            <p class="cb-settings-description">Signed-in accounts keep compact score summaries here. Raw findings are never saved.</p>
+            <button class="cb-btn cb-btn-secondary cb-btn-sm" type="button" onclick="loadAccountHistory()">Refresh history</button>
+            <div class="cca-history-list" id="cca-history-list" aria-live="polite"><span class="cb-td-muted">Sign in to view saved history.</span></div>
+          </div>
+
           <div class="cb-card">
 
             <!-- Appearance -->
@@ -1227,9 +1238,9 @@
               <div class="cb-settings-title">Appearance</div>
               <div class="cb-theme-swatches" role="group" aria-label="Select UI theme">
 
-                <div class="cb-theme-swatch active" data-theme="corporate"
-                     onclick="setTheme('corporate')" role="button" tabindex="0"
-                     aria-label="Corporate theme" aria-pressed="true">
+                 <div class="cb-theme-swatch" data-theme="corporate"
+                   onclick="setTheme('corporate')" role="button" tabindex="0"
+                   aria-label="Corporate theme" aria-pressed="false">
                   <div class="cb-theme-swatch-preview">
                     <div class="cb-theme-swatch-bar" style="background:#142037;"></div>
                     <div class="cb-theme-swatch-body" style="background:#F4F6FA;"></div>
@@ -1237,9 +1248,9 @@
                   <span class="cb-theme-swatch-label">Corporate</span>
                 </div>
 
-                <div class="cb-theme-swatch" data-theme="dark"
+                 <div class="cb-theme-swatch active" data-theme="dark"
                      onclick="setTheme('dark')" role="button" tabindex="0"
-                     aria-label="Dark theme" aria-pressed="false">
+                   aria-label="Dark theme" aria-pressed="true">
                   <div class="cb-theme-swatch-preview">
                     <div class="cb-theme-swatch-bar" style="background:#050C18;"></div>
                     <div class="cb-theme-swatch-body" style="background:#070D18;"></div>
@@ -1556,6 +1567,24 @@
               onclick="hideCommandProgress()" id="cb-progress-close"
               style="display:none;">Close</button>
     </div>
+  </div>
+</div>
+
+<div class="cca-auth-modal" id="cca-auth-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cca-auth-title">
+  <div class="cca-auth-dialog">
+    <button class="cca-auth-close" type="button" aria-label="Close account dialog" onclick="closeAuthModal()">×</button>
+    <span class="cca-agent-kicker">CLOUDCONSULTANT ACCOUNT</span>
+    <h2 id="cca-auth-title">Keep your audit history close.</h2>
+    <p id="cca-auth-copy">Create an account to save your reports and continue across devices.</p>
+    <form id="cca-auth-form" onsubmit="submitAuth(event)">
+      <label class="cb-label" for="cca-auth-email">Email</label>
+      <input class="cb-input" id="cca-auth-email" type="email" autocomplete="email" required>
+      <label class="cb-label" for="cca-auth-password">Password</label>
+      <input class="cb-input" id="cca-auth-password" type="password" minlength="8" autocomplete="current-password" required>
+      <button class="cb-btn cb-btn-primary" type="submit" id="cca-auth-submit">Log in</button>
+    </form>
+    <div class="cca-auth-message" id="cca-auth-message" role="status" aria-live="polite"></div>
+    <button class="cca-auth-switch" id="cca-auth-switch" type="button" onclick="switchAuthMode()">Need an account? Sign up</button>
   </div>
 </div>
 

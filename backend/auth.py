@@ -10,6 +10,8 @@ Tiers and report limits:
 import os
 import hashlib
 import secrets
+import base64
+import hmac
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
@@ -19,7 +21,7 @@ from dotenv import load_dotenv
 from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 
-from database import LicenseKey, UserSession, FreeUsage
+from database import LicenseKey, UserSession, FreeUsage, User, AccountSession
 
 load_dotenv()
 logger = logging.getLogger("cloud-brief.auth")
@@ -43,12 +45,50 @@ PRODUCT_TIER_MAP: dict[str, str] = {
 }
 
 SESSION_TTL_HOURS = 72  # session token valid for 3 days
+ACCOUNT_SESSION_TTL_HOURS = 168
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.scrypt(password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1)
+    return "scrypt$" + base64.urlsafe_b64encode(salt + digest).decode("ascii")
+
+
+def verify_password(password: str, encoded: str) -> bool:
+    try:
+        raw = base64.urlsafe_b64decode(encoded.split("$", 1)[1].encode("ascii"))
+        salt, expected = raw[:16], raw[16:]
+        actual = hashlib.scrypt(password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1)
+        return hmac.compare_digest(actual, expected)
+    except (ValueError, TypeError, IndexError):
+        return False
+
+
+def create_account_session(user: User, db: Session) -> str:
+    token = secrets.token_urlsafe(32)
+    db.add(AccountSession(token_hash=_sha256(token), user_id=user.id,
+                           expires_at=datetime.utcnow() + timedelta(hours=ACCOUNT_SESSION_TTL_HOURS)))
+    db.commit()
+    return token
+
+
+def get_account_session(token: str, db: Session) -> Optional[AccountSession]:
+    if not token:
+        return None
+    session = db.query(AccountSession).filter_by(token_hash=_sha256(token)).first()
+    if not session or session.expires_at < datetime.utcnow():
+        return None
+    return session
+
+
+def account_token(request: Request) -> str:
+    return request.cookies.get("account_token", "") or request.headers.get("X-Account-Token", "")
 
 
 def _current_month() -> str:

@@ -68,7 +68,101 @@ document.addEventListener('DOMContentLoaded', () => {
   updateFreeBanner();
   initAgent();
   initLandingMotion();
+  loadAccountStatus();
 });
+
+let authMode = 'login';
+
+async function loadAccountStatus() {
+  try {
+    const response = await fetch(`${API_BASE}/account/me`);
+    const data = await response.json();
+    const button = document.getElementById('cca-account-button');
+    if (!button) return;
+    if (data.authenticated) {
+      button.textContent = data.email;
+      button.onclick = () => logoutAccount();
+      button.setAttribute('aria-label', 'Sign out account');
+      loadAccountHistory();
+    }
+  } catch (_) { /* account controls are optional */ }
+}
+
+async function loadAccountHistory() {
+  const list = document.getElementById('cca-history-list');
+  if (!list) return;
+  try {
+    const response = await fetch(`${API_BASE}/account/history`, { credentials: 'same-origin' });
+    const data = await response.json();
+    if (!response.ok) { list.textContent = data.detail || 'Sign in to view saved history.'; return; }
+    list.replaceChildren();
+    if (!data.history.length) { list.textContent = 'No saved reports yet.'; return; }
+    data.history.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'cca-history-item';
+      const company = document.createElement('strong');
+      company.textContent = item.company_name;
+      const summary = document.createElement('span');
+      summary.textContent = `${item.score}/100 · ${item.grade} · ${item.date.slice(0, 10)}`;
+      row.append(company, summary);
+      list.appendChild(row);
+    });
+  } catch (_) { list.textContent = 'History is temporarily unavailable.'; }
+}
+
+function openAuthModal(mode = 'login') {
+  authMode = mode;
+  toggleAgentPanel(false);
+  updateAuthModal();
+  const modal = document.getElementById('cca-auth-modal');
+  if (modal) { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); document.getElementById('cca-auth-email')?.focus(); }
+}
+
+function closeAuthModal() {
+  const modal = document.getElementById('cca-auth-modal');
+  if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }
+}
+
+function switchAuthMode() { authMode = authMode === 'login' ? 'signup' : 'login'; updateAuthModal(); }
+
+function updateAuthModal() {
+  const signup = authMode === 'signup';
+  const title = document.getElementById('cca-auth-title');
+  const copy = document.getElementById('cca-auth-copy');
+  const submit = document.getElementById('cca-auth-submit');
+  const switchButton = document.getElementById('cca-auth-switch');
+  const password = document.getElementById('cca-auth-password');
+  if (title) title.textContent = signup ? 'Keep your audit history close.' : 'Welcome back to your audits.';
+  if (copy) copy.textContent = signup ? 'Create an account to save reports and continue across devices.' : 'Sign in to keep your workspace and report history together.';
+  if (submit) submit.textContent = signup ? 'Create account' : 'Log in';
+  if (switchButton) switchButton.textContent = signup ? 'Already have an account? Log in' : 'Need an account? Sign up';
+  if (password) password.autocomplete = signup ? 'new-password' : 'current-password';
+}
+
+async function submitAuth(event) {
+  event.preventDefault();
+  const email = document.getElementById('cca-auth-email')?.value.trim();
+  const password = document.getElementById('cca-auth-password')?.value || '';
+  const message = document.getElementById('cca-auth-message');
+  try {
+    const response = await fetch(`${API_BASE}/account/${authMode}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin', body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Account request failed.');
+    closeAuthModal();
+    await loadAccountStatus();
+    showToast(authMode === 'signup' ? 'Account created.' : 'Signed in.', 'success');
+  } catch (error) { if (message) message.textContent = error.message; }
+}
+
+async function logoutAccount() {
+  await fetch(`${API_BASE}/account/logout`, { method: 'POST', credentials: 'same-origin' });
+  const button = document.getElementById('cca-account-button');
+  if (button) { button.textContent = 'Log in'; button.onclick = () => openAuthModal('login'); button.setAttribute('aria-label', 'Log in'); }
+  showToast('Signed out.', 'info');
+}
 
 function initLandingMotion() {
   const sections = document.querySelectorAll('.cca-proof-strip, .cca-workflow');
@@ -274,7 +368,7 @@ function initThemeSwitcher() {
     btn.addEventListener('click', () => setTheme(btn.dataset.theme));
   });
   // Restore saved theme
-  const saved = localStorage.getItem('cca_theme') || 'corporate';
+  const saved = localStorage.getItem('cca_theme') || 'dark';
   setTheme(saved);
 }
 
