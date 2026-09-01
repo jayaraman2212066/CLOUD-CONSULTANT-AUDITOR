@@ -95,14 +95,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        # CSP: Allow self, inline styles/scripts (needed by frontend currently), and specific CDNs
+        # CSP: Allow self, inline styles/scripts, Google Auth, and specific CDNs
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://accounts.google.com; "
             "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
             "img-src 'self' data: https:; "
-            "connect-src 'self' https://api.polar.sh;"
+            "connect-src 'self' https://api.polar.sh https://accounts.google.com; "
+            "frame-src 'self' https://accounts.google.com;"
         )
         return response
 
@@ -188,6 +189,9 @@ class UserSignup(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=1)
+
+class GoogleLogin(BaseModel):
+    credential: str = Field(...)
 
 class LicenseActivate(BaseModel):
     license_key: str = Field(..., min_length=5)
@@ -463,6 +467,38 @@ async def account_signup(body: UserSignup, request: Request, _=Depends(auth_rate
         db.add(user)
         db.commit()
         db.refresh(user)
+        return _account_response(user, create_account_session(user, db))
+    finally:
+        db.close()
+
+
+@app.post("/account/google")
+async def account_google(body: GoogleLogin, request: Request, _=Depends(auth_rate_limit)):
+    """Authenticate via Google Identity Services JWT."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={body.credential}")
+        if resp.status_code != 200:
+            raise ValueError("Invalid Google token")
+        data = resp.json()
+        email = data.get("email")
+        if not email:
+            raise ValueError("Email not provided by Google")
+    except Exception as e:
+        logger.warning(f"Google auth failed: {e}")
+        raise HTTPException(401, "Google Authentication failed.")
+    
+    email = email.strip().lower()
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter_by(email=email).first()
+        if not user:
+            # Create user if doesn't exist
+            user = User(email=email, provider="google", password_hash=None)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
         return _account_response(user, create_account_session(user, db))
     finally:
         db.close()

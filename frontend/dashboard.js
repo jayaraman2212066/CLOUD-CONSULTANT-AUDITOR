@@ -157,6 +157,25 @@ async function submitAuth(event) {
   } catch (error) { if (message) message.textContent = error.message; }
 }
 
+async function handleGoogleCredential(response) {
+  const message = document.getElementById('cca-auth-message');
+  try {
+    const res = await fetch(`${API_BASE}/account/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ credential: response.credential }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Google sign-in failed.');
+    closeAuthModal();
+    await loadAccountStatus();
+    showToast('Signed in with Google.', 'success');
+  } catch (error) {
+    if (message) message.textContent = error.message;
+  }
+}
+
 function handleGoogleSignIn() {
   const message = document.getElementById('cca-auth-message');
   if (message) {
