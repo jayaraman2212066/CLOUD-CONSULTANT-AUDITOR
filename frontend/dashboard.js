@@ -2061,3 +2061,96 @@ function skeleton(height, width = '100%') {
   return `<div class="cb-skeleton cb-skeleton-block" style="height:${height};width:${width};"></div>`;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   GITGUARDIAN DESIGN SYSTEM LOGIC
+   ══════════════════════════════════════════════════════════════════ */
+
+// 1. Mouse Glow Tracking
+document.addEventListener('mousemove', e => {
+  const glowTargets = document.querySelectorAll('[data-mouse-glow]');
+  for (const el of glowTargets) {
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    el.style.setProperty('--mouse-x', `${x}px`);
+    el.style.setProperty('--mouse-y', `${y}px`);
+  }
+});
+
+// 2. Scroll-aware Header
+const mainScrollArea = document.getElementById('cb-main');
+const header = document.getElementById('cb-header');
+if (mainScrollArea && header) {
+  mainScrollArea.addEventListener('scroll', () => {
+    if (mainScrollArea.scrollTop > 10) {
+      header.classList.add('is--scrolling');
+    } else {
+      header.classList.remove('is--scrolling');
+    }
+  });
+}
+
+// 3. Command Palette Logic
+const cmdBackdrop = document.getElementById('cb-command-palette-backdrop');
+const cmdInput = document.getElementById('cb-cmd-input');
+
+function toggleCommandPalette() {
+  if (!cmdBackdrop) return;
+  const isOpen = cmdBackdrop.classList.contains('open');
+  if (isOpen) {
+    cmdBackdrop.classList.remove('open');
+  } else {
+    cmdBackdrop.classList.add('open');
+    if (cmdInput) {
+      cmdInput.value = '';
+      setTimeout(() => cmdInput.focus(), 50);
+    }
+  }
+}
+
+// Command palette backdrop click to close
+if (cmdBackdrop) {
+  cmdBackdrop.addEventListener('click', (e) => {
+    if (e.target === cmdBackdrop) toggleCommandPalette();
+  });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  // Command palette: Ctrl+K or Cmd+K
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    toggleCommandPalette();
+  }
+
+  // Export report: Ctrl+E
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+    e.preventDefault();
+    if (typeof generateReport === 'function') generateReport();
+  }
+
+  // Close command palette on Escape
+  if (e.key === 'Escape') {
+    if (cmdBackdrop && cmdBackdrop.classList.contains('open')) {
+      toggleCommandPalette();
+    }
+  }
+
+  // Open Agent: Ctrl + /
+  if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+    e.preventDefault();
+    if (typeof toggleAgentPanel === 'function') toggleAgentPanel(true);
+  }
+});
+
+// 4. Agent Helper function for suggested prompts
+window.sendAgentPrompt = function(promptText) {
+  const agentInput = document.getElementById('cca-agent-input');
+  const agentSend = document.getElementById('cca-agent-send');
+  if (agentInput && agentSend) {
+    // Ensure agent is open
+    if (typeof toggleAgentPanel === 'function') toggleAgentPanel(true);
+    agentInput.value = promptText;
+    agentSend.click();
+  }
+};

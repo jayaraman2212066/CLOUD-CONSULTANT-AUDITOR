@@ -8,7 +8,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Prism.js syntax highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
@@ -25,49 +25,60 @@
     #cb-app { display: flex; flex-direction: column; min-height: 100vh; }
     #cb-header {
       position: sticky; top: 0; z-index: 200;
-      height: 56px; background: #0A1628;
+      height: 72px; background: rgba(0, 5, 20, 0.85);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       display: flex; align-items: center;
       padding: 0 20px; gap: 16px; flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border-bottom: 1px solid rgba(78, 115, 219, 0.12);
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    #cb-header.is--scrolling {
+      background: rgba(0, 5, 20, 0.95);
+      border-bottom-color: rgba(78, 115, 219, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
     #cb-body { display: flex; flex: 1; min-height: 0; }
     #cb-sidebar {
-      width: 220px; flex-shrink: 0;
-      background: #142037;
+      width: 240px; flex-shrink: 0;
+      background: #000514;
       display: flex; flex-direction: column;
-      position: sticky; top: 56px;
-      height: calc(100vh - 56px);
+      position: sticky; top: 72px;
+      height: calc(100vh - 72px);
       overflow-y: auto; overflow-x: hidden;
       z-index: 100;
+      border-right: 1px solid rgba(78, 115, 219, 0.1);
     }
     #cb-main {
       flex: 1; min-width: 0;
-      padding: 28px 32px;
-      background: #F4F6FA;
+      padding: 32px 40px;
+      background: #F3F3F9;
       overflow-y: auto;
     }
-    [data-theme="dark"] #cb-main { background: #070D18; }
+    [data-theme="dark"] #cb-main { background: #000514; }
     [data-theme="highcontrast"] #cb-main { background: #000; }
     .cb-wordmark { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
-    .cb-wordmark svg { width: 24px; height: 24px; color: #1E6FD9; }
+    .cb-wordmark svg { width: 24px; height: 24px; color: #4E73DB; }
     .cb-wordmark-text { font-size: 1.0625rem; font-weight: 600; color: #fff; }
     .cb-wordmark-text span { font-weight: 700; }
     #cb-header-context { flex: 1; text-align: center; font-size: 0.6875rem; color: rgba(255,255,255,0.5); }
     .cb-header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
     .cb-nav { flex: 1; padding: 12px 0; list-style: none; }
+    .cb-nav-category { padding: 20px 16px 6px; }
+    .cb-nav-category:first-child { padding-top: 8px; }
+    .cb-nav-category-label { font-family: 'Instrument Sans', sans-serif; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; color: #475B87; text-transform: uppercase; }
+    #cb-sidebar.collapsed .cb-nav-category-label { display: none; }
     .cb-nav-link {
       display: flex; align-items: center; gap: 12px;
-      padding: 0 16px; height: 44px;
-      color: rgba(255,255,255,0.55);
+      padding: 0 16px; height: 42px; margin: 2px 10px;
+      color: #778DBD; border-radius: 8px;
       background: transparent; border: none;
-      border-left: 3px solid transparent;
-      font-size: 0.8125rem; font-weight: 500;
-      cursor: pointer; width: 100%; text-align: left;
+      font-size: 0.8125rem; font-weight: 400;
+      cursor: pointer; width: calc(100% - 20px); text-align: left;
       white-space: nowrap; overflow: hidden;
       transition: background 0.15s, color 0.15s;
     }
-    .cb-nav-link:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
-    .cb-nav-link.active { background: rgba(30,111,217,0.15); color: #fff; border-left-color: #1E6FD9; }
+    .cb-nav-link:hover { background: rgba(78, 115, 219, 0.1); color: #E9EDF5; }
+    .cb-nav-link.active { background: rgba(78, 115, 219, 0.18); color: #E9EDF5; font-weight: 500; }
     .cb-nav-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
     .cb-nav-link.active svg { opacity: 1; }
     .cb-nav-label { flex: 1; }
@@ -108,6 +119,15 @@
     .cb-nav-badge { background: #C92626; color: #fff; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; flex-shrink: 0; }
     .cb-nav-link.has-dropdown::after { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); opacity: 0.5; flex-shrink: 0; }
     .cb-nav-link.has-dropdown.open::after { transform: rotate(-135deg); }
+    .cb-cmd-trigger {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 36px; padding: 0 12px; margin-left: auto; width: 200px;
+      background: rgba(0, 5, 20, 0.5); border: 1px solid rgba(78, 115, 219, 0.2);
+      border-radius: 6px; color: #778DBD; cursor: pointer; transition: 0.2s;
+    }
+    .cb-cmd-trigger:hover { border-color: rgba(78, 115, 219, 0.5); background: rgba(78, 115, 219, 0.1); }
+    .cb-cmd-trigger-text { font-size: 0.8125rem; }
+    .cb-cmd-trigger-shortcut { font-size: 0.6875rem; border: 1px solid rgba(119, 141, 189, 0.3); padding: 2px 6px; border-radius: 4px; }
     @media (max-width: 768px) {
       #cb-hamburger { display: flex; }
       #cb-sidebar { position: fixed; top: 56px; left: 0; height: calc(100vh - 56px); width: 220px; transform: translateX(-100%); transition: transform 0.2s; z-index: 150; }
@@ -240,7 +260,7 @@
 <div id="cb-app" style="display:flex;flex-direction:column;min-height:100vh;">
 
   <!-- ── TOP HEADER BAR ──────────────────────────────────────────── -->
-  <header id="cb-header" role="banner" style="position:sticky;top:0;z-index:200;height:56px;background:#0A1628;display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;">
+  <header id="cb-header" role="banner" glass-background>
 
     <!-- Hamburger (mobile) -->
     <button id="cb-hamburger" aria-label="Open navigation" aria-expanded="false">
@@ -255,6 +275,12 @@
 
     <!-- Center context (file loaded state) -->
     <div id="cb-header-context" aria-live="polite"></div>
+
+    <!-- Command Palette trigger -->
+    <button class="cb-cmd-trigger" id="cb-cmd-trigger" onclick="toggleCommandPalette()" aria-label="Search (Ctrl+K)">
+      <span class="cb-cmd-trigger-text">Search...</span>
+      <span class="cb-cmd-trigger-shortcut">Ctrl K</span>
+    </button>
 
     <!-- Right controls -->
     <div class="cb-header-right">
@@ -290,18 +316,22 @@
   </header>
 
   <!-- ── BODY ROW ─────────────────────────────────────────────────── -->
-  <div id="cb-body" style="display:flex;flex:1;min-height:0;">
+  <div id="cb-body">
 
     <!-- Mobile overlay -->
     <div id="cb-sidebar-overlay" aria-hidden="true"></div>
 
     <!-- ── LEFT SIDEBAR ──────────────────────────────────────────── -->
-    <nav id="cb-sidebar" aria-label="Main navigation" style="width:220px;flex-shrink:0;background:#142037;display:flex;flex-direction:column;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;overflow-x:hidden;">
+    <nav id="cb-sidebar" aria-label="Main navigation">
 
       <ul class="cb-nav" role="list">
 
+        <li class="cb-nav-category" aria-hidden="true">
+          <span class="cb-nav-category-label">Audit</span>
+        </li>
+
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link active" data-panel="upload"
+          <button class="cb-nav-link active" data-panel="upload" data-mouse-glow
                   onclick="navigateTo('upload')" aria-current="page">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-upload"/></svg>
             <span class="cb-nav-label">Upload</span>
@@ -310,7 +340,7 @@
         </li>
 
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link" data-panel="dashboard"
+          <button class="cb-nav-link" data-panel="dashboard" data-mouse-glow
                   onclick="navigateTo('dashboard')">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-dashboard"/></svg>
             <span class="cb-nav-label">Dashboard</span>
@@ -319,7 +349,7 @@
         </li>
 
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link" data-panel="findings"
+          <button class="cb-nav-link" data-panel="findings" data-mouse-glow
                   onclick="navigateTo('findings')">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-findings"/></svg>
             <span class="cb-nav-label">Findings</span>
@@ -327,8 +357,12 @@
           <span class="cb-nav-flyout" aria-hidden="true">Findings</span>
         </li>
 
+        <li class="cb-nav-category" aria-hidden="true">
+          <span class="cb-nav-category-label">Remediation</span>
+        </li>
+
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link" data-panel="exceptions"
+          <button class="cb-nav-link" data-panel="exceptions" data-mouse-glow
                   onclick="navigateTo('exceptions')">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-exception"/></svg>
             <span class="cb-nav-label">Exceptions</span>
@@ -338,7 +372,7 @@
         </li>
 
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link" data-panel="iac"
+          <button class="cb-nav-link" data-panel="iac" data-mouse-glow
                   onclick="navigateTo('iac')">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-code"/></svg>
             <span class="cb-nav-label">IaC Viewer</span>
@@ -348,28 +382,32 @@
 
         <li class="cb-nav-divider" role="separator" aria-hidden="true"></li>
 
+        <li class="cb-nav-category" aria-hidden="true">
+          <span class="cb-nav-category-label">Account</span>
+        </li>
+
         <!-- Export dropdown -->
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link has-dropdown" id="cb-export-toggle"
+          <button class="cb-nav-link has-dropdown" id="cb-export-toggle" data-mouse-glow
                   onclick="toggleExportMenu()" aria-expanded="false">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-export"/></svg>
             <span class="cb-nav-label">Export</span>
           </button>
           <span class="cb-nav-flyout" aria-hidden="true">Export</span>
           <ul class="cb-nav-submenu" id="cb-export-submenu" role="list">
-            <li><button class="cb-nav-link" onclick="navigateTo('export')">
+            <li><button class="cb-nav-link" onclick="navigateTo('export')" data-mouse-glow>
               <svg width="18" height="18" aria-hidden="true"><use href="#ic-pdf"/></svg>
               <span class="cb-nav-label">All Exports</span>
             </button></li>
-            <li><button class="cb-nav-link" onclick="generateReport()">
+            <li><button class="cb-nav-link" onclick="generateReport()" data-mouse-glow>
               <svg width="18" height="18" aria-hidden="true"><use href="#ic-pdf"/></svg>
               <span class="cb-nav-label">PDF Report</span>
             </button></li>
-            <li><button class="cb-nav-link" onclick="exportCSV()">
+            <li><button class="cb-nav-link" onclick="exportCSV()" data-mouse-glow>
               <svg width="18" height="18" aria-hidden="true"><use href="#ic-csv"/></svg>
               <span class="cb-nav-label">Export CSV</span>
             </button></li>
-            <li><button class="cb-nav-link" onclick="exportBundle()">
+            <li><button class="cb-nav-link" onclick="exportBundle()" data-mouse-glow>
               <svg width="18" height="18" aria-hidden="true"><use href="#ic-zip"/></svg>
               <span class="cb-nav-label">Bundle</span>
             </button></li>
@@ -377,7 +415,7 @@
         </li>
 
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link" data-panel="pricing"
+          <button class="cb-nav-link" data-panel="pricing" data-mouse-glow
                   onclick="navigateTo('pricing')">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-star"/></svg>
             <span class="cb-nav-label">Pricing</span>
@@ -386,7 +424,7 @@
         </li>
 
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link" data-panel="settings"
+          <button class="cb-nav-link" data-panel="settings" data-mouse-glow
                   onclick="navigateTo('settings')">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-settings"/></svg>
             <span class="cb-nav-label">Settings</span>
@@ -395,7 +433,7 @@
         </li>
 
         <li class="cb-nav-item" role="listitem">
-          <button class="cb-nav-link" data-panel="about"
+          <button class="cb-nav-link" data-panel="about" data-mouse-glow
                   onclick="navigateTo('about')">
             <svg width="18" height="18" aria-hidden="true"><use href="#ic-info"/></svg>
             <span class="cb-nav-label">About</span>
@@ -406,11 +444,11 @@
       </ul>
 
       <!-- Footer links -->
-      <div style="padding:10px 16px 6px;border-top:1px solid rgba(255,255,255,0.07);">
+      <div style="padding:10px 16px 6px;border-top:1px solid rgba(119,141,189,0.15);">
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <a href="#" onclick="navigateTo('terms');return false;" style="font-size:0.6875rem;color:rgba(255,255,255,0.35);text-decoration:none;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Terms</a>
-          <a href="#" onclick="navigateTo('privacy');return false;" style="font-size:0.6875rem;color:rgba(255,255,255,0.35);text-decoration:none;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Privacy</a>
-          <a href="#" onclick="navigateTo('about');return false;" style="font-size:0.6875rem;color:rgba(255,255,255,0.35);text-decoration:none;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">About</a>
+          <a href="#" onclick="navigateTo('terms');return false;" style="font-size:0.6875rem;color:#778DBD;text-decoration:none;" onmouseover="this.style.color='#E9EDF5'" onmouseout="this.style.color='#778DBD'">Terms</a>
+          <a href="#" onclick="navigateTo('privacy');return false;" style="font-size:0.6875rem;color:#778DBD;text-decoration:none;" onmouseover="this.style.color='#E9EDF5'" onmouseout="this.style.color='#778DBD'">Privacy</a>
+          <a href="#" onclick="navigateTo('about');return false;" style="font-size:0.6875rem;color:#778DBD;text-decoration:none;" onmouseover="this.style.color='#E9EDF5'" onmouseout="this.style.color='#778DBD'">About</a>
         </div>
       </div>
 
@@ -463,7 +501,7 @@
              ═══════════════════════════════════════════════════════ -->
         <section id="panel-upload" class="cb-panel active" aria-label="Upload and configure">
 
-          <div class="cca-announcement" role="status">
+          <div class="cca-announcement" role="status" glass-background>
             <span class="cca-announcement-dot"></span>
             <span>New: voice-enabled audit workflows</span>
             <button type="button" onclick="document.getElementById('cca-agent-input')?.focus()">Ask the agent <span aria-hidden="true">→</span></button>
@@ -472,7 +510,7 @@
           <!-- Hero (shown before file loaded) -->
           <div class="cb-upload-hero" id="upload-hero">
             <h1 class="cb-upload-hero-title">
-              Turn Prowler JSON into a<br>boardroom-ready security report.
+              Turn Prowler JSON into a<br><span class="is--text-gradient">boardroom-ready security report.</span>
             </h1>
             <p class="cb-upload-hero-sub">
               Supports Prowler v2–v6 and ScoutSuite &nbsp;·&nbsp;
@@ -483,7 +521,7 @@
 
           <!-- Upload zone -->
           <div class="cb-upload-zone" id="uploadZone" role="button"
-               tabindex="0" aria-label="Drop Prowler JSON file here or click to browse">
+               tabindex="0" aria-label="Drop Prowler JSON file here or click to browse" glass-background data-mouse-glow>
             <svg class="cb-upload-icon" aria-hidden="true"><use href="#ic-shield"/></svg>
             <p class="cb-upload-title">Drop Prowler JSON here</p>
             <p class="cb-upload-sub">or click to browse</p>
@@ -511,10 +549,10 @@
           </div>
 
           <div class="cca-proof-strip" aria-label="Platform capabilities">
-            <div><strong>337+</strong><span>security checks mapped</span></div>
-            <div><strong>5</strong><span>compliance frameworks</span></div>
-            <div><strong>3</strong><span>remediation formats</span></div>
-            <div><strong>0</strong><span>cloud changes made</span></div>
+            <div data-mouse-glow><strong>337+</strong><span>security checks mapped</span></div>
+            <div data-mouse-glow><strong>5</strong><span>compliance frameworks</span></div>
+            <div data-mouse-glow><strong>3</strong><span>remediation formats</span></div>
+            <div data-mouse-glow><strong>0</strong><span>cloud changes made</span></div>
           </div>
 
           <!-- File selected state -->
@@ -534,7 +572,7 @@
           </div>
 
           <!-- Configuration panel -->
-          <div class="cb-card" style="max-width:640px; margin:24px auto 0;" id="config-panel">
+          <div class="cb-card" style="max-width:640px; margin:24px auto 0;" id="config-panel" glass-background>
             <h2 class="cb-card-title">Report Configuration</h2>
 
             <div class="cb-grid-2">
@@ -1662,6 +1700,56 @@
         Maybe later
       </button>
 
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     COMMAND PALETTE (GitGuardian-inspired)
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="cb-command-palette-backdrop" aria-hidden="true">
+  <div id="cb-command-palette" role="dialog" aria-modal="true" aria-label="Command Palette">
+    <div class="cb-cmd-header">
+      <svg width="18" height="18" aria-hidden="true" style="color: #778DBD; margin-left: 16px;"><use href="#ic-search"/></svg>
+      <input type="text" class="cb-cmd-input" id="cb-cmd-input" placeholder="Search commands, findings, or type > for actions" autocomplete="off" spellcheck="false">
+      <div class="cb-cmd-badge">ESC</div>
+    </div>
+    <div class="cb-cmd-body" id="cb-cmd-results">
+      <div class="cb-cmd-group">
+        <div class="cb-cmd-group-title">Navigation</div>
+        <button class="cb-cmd-item" onclick="navigateTo('upload'); toggleCommandPalette()">
+          <svg width="16" height="16" aria-hidden="true"><use href="#ic-upload"/></svg>
+          <span class="cb-cmd-item-label">Go to Upload</span>
+          <span class="cb-cmd-shortcut">G U</span>
+        </button>
+        <button class="cb-cmd-item" onclick="navigateTo('dashboard'); toggleCommandPalette()">
+          <svg width="16" height="16" aria-hidden="true"><use href="#ic-dashboard"/></svg>
+          <span class="cb-cmd-item-label">Go to Dashboard</span>
+          <span class="cb-cmd-shortcut">G D</span>
+        </button>
+        <button class="cb-cmd-item" onclick="navigateTo('findings'); toggleCommandPalette()">
+          <svg width="16" height="16" aria-hidden="true"><use href="#ic-findings"/></svg>
+          <span class="cb-cmd-item-label">Go to Findings</span>
+          <span class="cb-cmd-shortcut">G F</span>
+        </button>
+      </div>
+      <div class="cb-cmd-group">
+        <div class="cb-cmd-group-title">Actions</div>
+        <button class="cb-cmd-item" onclick="generateReport(); toggleCommandPalette()">
+          <svg width="16" height="16" aria-hidden="true"><use href="#ic-pdf"/></svg>
+          <span class="cb-cmd-item-label">Generate PDF Report</span>
+          <span class="cb-cmd-shortcut">Ctrl E</span>
+        </button>
+        <button class="cb-cmd-item" onclick="toggleAgentPanel(); toggleCommandPalette()">
+          <svg width="16" height="16" aria-hidden="true"><use href="#ic-sparkle"/></svg>
+          <span class="cb-cmd-item-label">Ask Auditor Agent</span>
+          <span class="cb-cmd-shortcut">Ctrl /</span>
+        </button>
+      </div>
+    </div>
+    <div class="cb-cmd-footer">
+      <span><kbd>↑</kbd> <kbd>↓</kbd> to navigate</span>
+      <span><kbd>↵</kbd> to select</span>
     </div>
   </div>
 </div>
