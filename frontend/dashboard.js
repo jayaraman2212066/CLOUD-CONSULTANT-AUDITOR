@@ -121,7 +121,8 @@ function openAuthModal(mode = 'login') {
     document.getElementById('cca-auth-email')?.focus(); 
     
     // Dynamically render Google Sign-In button now that the modal is visible
-    if (window.google && window.google.accounts) {
+    const btnContainer = document.getElementById("google-btn-container");
+    if (window.google && window.google.accounts && btnContainer && btnContainer.innerHTML === "") {
       window.google.accounts.id.initialize({
         client_id: "74114039394-q7i7u46a91b6fmrumi8fejbh1ssu7go2.apps.googleusercontent.com",
         callback: handleGoogleCredential,
