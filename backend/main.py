@@ -482,6 +482,8 @@ async def account_google(body: GoogleLogin, request: Request, _=Depends(auth_rat
         if resp.status_code != 200:
             raise ValueError("Invalid Google token")
         data = resp.json()
+        if data.get("aud") != "74114039394-q7i7u46a91b6fmrumi8fejbh1ssu7go2.apps.googleusercontent.com":
+            raise ValueError("Token audience mismatch")
         email = data.get("email")
         if not email:
             raise ValueError("Email not provided by Google")
