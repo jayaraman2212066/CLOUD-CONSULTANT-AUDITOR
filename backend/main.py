@@ -14,7 +14,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import (FastAPI, UploadFile, File, Form, HTTPException,
-                     Request, Depends, status)
+                     Request, Depends, status, Body)
+from pydantic import BaseModel, EmailStr, Field
+from typing import List, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (StreamingResponse, FileResponse,
                                HTMLResponse, JSONResponse)
@@ -81,6 +83,30 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-Session-Token"],
     allow_credentials=False,
 )
+
+# ── Security Headers Middleware ──────────────────────────────────────────────
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # CSP: Allow self, inline styles/scripts (needed by frontend currently), and specific CDNs
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.polar.sh;"
+        )
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # ── Exception handlers ────────────────────────────────────────────────────────
 @app.exception_handler(StarletteHTTPException)
@@ -153,21 +179,39 @@ def _validate_company(name: str) -> str:
     return "".join(ch for ch in name if ch.isalnum() or ch in " .,&-_()") or "AWS Account"
 
 
+# ── Schemas ───────────────────────────────────────────────────────────────────
+
+class UserSignup(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=1)
+
+class LicenseActivate(BaseModel):
+    license_key: str = Field(..., min_length=5)
+
+class CheckoutCreate(BaseModel):
+    product_id: str = Field(..., min_length=1)
+    success_url: str = Field(..., min_length=5)
+
+class DownloadScript(BaseModel):
+    findings: List[Dict[str, Any]] = Field(..., max_length=200)
+
+class AgentChat(BaseModel):
+    messages: List[Dict[str, Any]] = Field(default_factory=list)
+    context: Dict[str, Any] = Field(default_factory=dict)
+
+
 @app.post("/agent/chat")
-async def agent_chat(request: Request, _=Depends(rate_limit)):
+async def agent_chat(body: AgentChat, request: Request, _=Depends(rate_limit)):
     """Answer bounded auditor questions and return an allowlisted UI action."""
     if not GEMINI_API_KEY:
         raise HTTPException(503, "AI agent is not configured. Set GEMINI_API_KEY on the server.")
 
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(400, "JSON body required.")
-
-    messages = body.get("messages", [])
-    context = body.get("context", {})
-    if not isinstance(messages, list) or not isinstance(context, dict):
-        raise HTTPException(422, "messages and context must be objects.")
+    messages = body.messages
+    context = body.context
 
     safe_messages = []
     for message in messages[-12:]:
@@ -408,17 +452,9 @@ def _account_response(user, token: str):
 
 
 @app.post("/account/signup")
-async def account_signup(request: Request, _=Depends(auth_rate_limit)):
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(400, "JSON body required.")
-    email = str(body.get("email", "")).strip().lower()
-    password = str(body.get("password", ""))
-    if "@" not in email or len(email) > 254:
-        raise HTTPException(400, "Enter a valid email address.")
-    if len(password) < 8 or len(password) > 128:
-        raise HTTPException(400, "Password must be 8 to 128 characters.")
+async def account_signup(body: UserSignup, request: Request, _=Depends(auth_rate_limit)):
+    email = body.email.strip().lower()
+    password = body.password
     db = SessionLocal()
     try:
         if db.query(User).filter_by(email=email).first():
@@ -433,13 +469,9 @@ async def account_signup(request: Request, _=Depends(auth_rate_limit)):
 
 
 @app.post("/account/login")
-async def account_login(request: Request, _=Depends(auth_rate_limit)):
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(400, "JSON body required.")
-    email = str(body.get("email", "")).strip().lower()
-    password = str(body.get("password", ""))
+async def account_login(body: UserLogin, request: Request, _=Depends(auth_rate_limit)):
+    email = body.email.strip().lower()
+    password = body.password
     db = SessionLocal()
     try:
         user = db.query(User).filter_by(email=email).first()
@@ -565,22 +597,14 @@ def license_status(request: Request):
 # =============================================================================
 
 @app.post("/checkout/create")
-async def checkout_create(request: Request, _=Depends(rate_limit)):
+async def checkout_create(body: CheckoutCreate, request: Request, _=Depends(rate_limit)):
     """Create a Polar checkout session and return the hosted URL."""
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(400, "JSON body required.")
-
-    product_id  = str(body.get("product_id", "")).strip()
-    success_url = str(body.get("success_url", "")).strip()
+    product_id  = body.product_id.strip()
+    success_url = body.success_url.strip()
     if not success_url:
         # Build from request origin or fall back to relative path
         origin = request.headers.get("origin", "")
         success_url = f"{origin}/?activated=1" if origin else "/?activated=1"
-
-    if not product_id:
-        raise HTTPException(400, "product_id is required.")
 
     polar_token = os.getenv("POLAR_ACCESS_TOKEN", "")
     if not polar_token:
@@ -853,13 +877,10 @@ def iac_snippet(check_id: str, fmt: str = "cli", _=Depends(rate_limit)):
 # =============================================================================
 
 @app.post("/download-script")
-async def download_script(request: Request, fmt: str = "sh", _=Depends(rate_limit)):
+async def download_script(body: DownloadScript, request: Request, fmt: str = "sh", _=Depends(rate_limit)):
     if fmt not in ("sh", "ps1"):
         raise HTTPException(400, "fmt must be sh or ps1")
-    body = await request.json()
-    raw_f = body.get("findings", [])
-    if not isinstance(raw_f, list) or len(raw_f) > 200:
-        raise HTTPException(400, "findings must be a list of up to 200 items")
+    raw_f = body.findings
     safe_f = [
         {"check_id": str(f.get("check_id", ""))[:120],
          "title":    str(f.get("title", ""))[:200],
