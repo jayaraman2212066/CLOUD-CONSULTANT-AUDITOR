@@ -115,7 +115,25 @@ function openAuthModal(mode = 'login') {
   toggleAgentPanel(false);
   updateAuthModal();
   const modal = document.getElementById('cca-auth-modal');
-  if (modal) { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); document.getElementById('cca-auth-email')?.focus(); }
+  if (modal) { 
+    modal.classList.add('is-open'); 
+    modal.setAttribute('aria-hidden', 'false'); 
+    document.getElementById('cca-auth-email')?.focus(); 
+    
+    // Dynamically render Google Sign-In button now that the modal is visible
+    if (window.google && window.google.accounts) {
+      window.google.accounts.id.initialize({
+        client_id: "74114039394-q7i7u46a91b6fmrumi8fejbh1ssu7go2.apps.googleusercontent.com",
+        callback: handleGoogleCredential,
+        context: "signin",
+        auto_prompt: false
+      });
+      window.google.accounts.id.renderButton(
+        document.getElementById("google-btn-container"),
+        { theme: "outline", size: "large", type: "standard", text: "signin_with", shape: "rectangular" }
+      );
+    }
+  }
 }
 
 function closeAuthModal() {
