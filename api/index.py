@@ -19,4 +19,24 @@ try:
 except Exception:
     pass
 
-from main import app  # noqa: F401  — Vercel looks for `app`
+import traceback
+
+try:
+    from main import app  # noqa: F401  — Vercel looks for `app`
+except Exception as e:
+    err_tb = traceback.format_exc()
+    print(f"[VERCEL STARTUP ERROR] {err_tb}")
+    from fastapi import FastAPI
+    from fastapi.responses import JSONResponse
+    app = FastAPI(title="Error Fallback")
+
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+    async def fallback_route(path: str):
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "FastAPI failed to initialize on Vercel",
+                "detail": str(e),
+                "traceback": err_tb
+            }
+        )
