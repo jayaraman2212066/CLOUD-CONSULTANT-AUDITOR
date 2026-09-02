@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- App styles -->
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=13">
   <style>
     /* CRITICAL LAYOUT — inline so it always applies */
     html, body { margin: 0; padding: 0; height: 100%; }
@@ -486,11 +486,13 @@
           </div>
           <div class="cca-agent-compose">
             <textarea id="cca-agent-input" rows="2" maxlength="2000"
-                      placeholder="Ask about this audit..." aria-label="Message the auditor agent"></textarea>
+                      placeholder="Ask about this audit, explain findings, or next steps..." aria-label="Message the auditor agent"></textarea>
             <div class="cca-agent-actions">
-              <button class="cca-agent-mic" id="cca-agent-mic" type="button" aria-label="Start voice input" title="Voice input">Mic</button>
-              <button class="cca-agent-voice" id="cca-agent-voice" type="button" aria-pressed="false" aria-label="Enable AI voice" title="AI voice output" onclick="toggleAgentVoice()">AI voice: Off</button>
-              <button class="cb-btn cb-btn-primary cca-agent-send" id="cca-agent-send" type="button">Send</button>
+              <div class="cca-agent-actions-left">
+                <button class="cca-agent-mic" id="cca-agent-mic" type="button" aria-label="Start voice input" title="Voice input">🎙️ Mic</button>
+                <button class="cca-agent-voice" id="cca-agent-voice" type="button" aria-pressed="false" aria-label="Enable AI voice" title="AI voice output" onclick="toggleAgentVoice()">🔊 AI voice: Off</button>
+              </div>
+              <button class="cb-btn cb-btn-primary cca-agent-send" id="cca-agent-send" type="button">Send ➔</button>
             </div>
           </div>
         </aside>

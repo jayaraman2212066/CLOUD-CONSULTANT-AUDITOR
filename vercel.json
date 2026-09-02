@@ -3,7 +3,8 @@
   "name": "cloudconsultant-auditor",
   "functions": {
     "api/index.py": {
-      "maxDuration": 300
+      "includeFiles": "backend/**",
+      "maxDuration": 60
     }
   },
   "routes": [
