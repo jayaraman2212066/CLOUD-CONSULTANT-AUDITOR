@@ -15,7 +15,7 @@ load_dotenv()
 
 from fastapi import (FastAPI, UploadFile, File, Form, HTTPException,
                      Request, Depends, status, Body)
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (StreamingResponse, FileResponse,
@@ -183,11 +183,11 @@ def _validate_company(name: str) -> str:
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
 class UserSignup(BaseModel):
-    email: EmailStr
+    email: str = Field(..., min_length=5, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     password: str = Field(..., min_length=8, max_length=128)
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str = Field(..., min_length=5, max_length=254)
     password: str = Field(..., min_length=1)
 
 class GoogleLogin(BaseModel):
