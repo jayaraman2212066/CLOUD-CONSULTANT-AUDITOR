@@ -111,7 +111,8 @@ class ReportHistory(Base):
 def _sqlite_engine():
     import os
     # On Vercel, the root filesystem is read-only. We must use /tmp for sqlite.
-    db_path = "/tmp/database.db" if os.getenv("VERCEL") else "./database.db"
+    is_vercel = os.getenv("VERCEL") or os.getenv("VERCEL_ENV") or os.getenv("VERCEL_URL")
+    db_path = "/tmp/database.db" if is_vercel else "./database.db"
     return create_engine(
         f"sqlite:///{db_path}",
         connect_args={"check_same_thread": False},

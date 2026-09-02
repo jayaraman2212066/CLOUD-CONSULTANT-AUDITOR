@@ -38,9 +38,9 @@ TIER_LIMITS: dict[str, int] = {
 
 PRODUCT_TIER_MAP: dict[str, str] = {
     k: v for k, v in {
-        os.getenv("POLAR_PRODUCT_ID_FREELANCER",     ""): "freelancer",
-        os.getenv("POLAR_PRODUCT_ID_CONSULTANT_PRO", ""): "consultant_pro",
-        os.getenv("POLAR_PRODUCT_ID_PAY_PER_REPORT", ""): "pay_per_report",
+        os.getenv("POLAR_PRODUCT_ID_FREELANCER",     "beaa1c6d-456b-49b7-93ee-6f0b5fe3a3ff"): "freelancer",
+        os.getenv("POLAR_PRODUCT_ID_CONSULTANT_PRO", "16766b30-ab0d-42ef-85d1-534f709d021b"): "consultant_pro",
+        os.getenv("POLAR_PRODUCT_ID_PAY_PER_REPORT", "932bdbd1-decf-49ba-869c-f9aa57610d7c"): "pay_per_report",
     }.items() if k  # exclude empty-string keys when env vars are unset
 }
 

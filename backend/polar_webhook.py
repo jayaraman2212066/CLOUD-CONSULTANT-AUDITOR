@@ -36,6 +36,7 @@ import hmac
 import hashlib
 import json
 import logging
+import base64
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -48,27 +49,73 @@ from auth import PRODUCT_TIER_MAP, TIER_LIMITS, _current_month, _sha256
 load_dotenv()
 logger = logging.getLogger("cloud-brief.webhook")
 
-POLAR_WEBHOOK_SECRET = os.getenv("POLAR_WEBHOOK_SECRET", "")
+DEFAULT_WEBHOOK_SECRETS = (
+    "whsec_uhuoj4Mos08pEGAd15JpFdytU9JjOrhW7gjbr3mX8Ps,whsec_KUIyjVIMg2zVZULNTjRDFfhKlN0atem0SaS250dHfEk"
+)
+POLAR_WEBHOOK_SECRET = os.getenv("POLAR_WEBHOOK_SECRET", DEFAULT_WEBHOOK_SECRETS)
 
 
 # ── Signature verification ────────────────────────────────────────────────────
 
-def _verify_signature(payload: bytes, sig_header: str) -> None:
+def _verify_signature(payload: bytes, sig_header: str, msg_id: str = "", msg_ts: str = "") -> None:
     """
-    Polar signs webhooks with HMAC-SHA256.
-    Header 'webhook-signature' format: 'v1,<hex_digest>' (may contain multiple
-    comma-separated signatures for key rotation).
+    Polar signs webhooks with HMAC-SHA256 (standard Svix format: 'v1,<base64>' or raw hex).
+    Supports multiple comma-separated secrets.
     """
-    if not POLAR_WEBHOOK_SECRET:
+    raw_secrets = (os.getenv("POLAR_WEBHOOK_SECRET") or DEFAULT_WEBHOOK_SECRETS).strip()
+    if not raw_secrets:
         raise HTTPException(500, "Webhook secret not configured.")
-    expected = hmac.new(
-        POLAR_WEBHOOK_SECRET.encode("utf-8"),
-        msg=payload,
-        digestmod=hashlib.sha256,
-    ).hexdigest()
-    # Polar sends 'v1,<hex>' — extract all hex parts and compare any
-    sigs = [part.split(",", 1)[-1].strip() for part in sig_header.split() if part]
-    if not any(hmac.compare_digest(expected, s) for s in sigs):
+
+    secrets_list = [s.strip() for s in raw_secrets.replace(";", ",").split(",") if s.strip()]
+
+    # Extract signature parts
+    sig_tokens = []
+    for part in sig_header.split():
+        if "," in part:
+            sig_tokens.append(part.split(",", 1)[-1].strip())
+        elif "=" in part:
+            sig_tokens.append(part.split("=", 1)[-1].strip())
+        else:
+            sig_tokens.append(part.strip())
+
+    # Build potential payload variants:
+    # 1. Standard Webhook format: {msg_id}.{msg_ts}.{payload}
+    # 2. Raw payload
+    payload_variants = [payload]
+    if msg_id and msg_ts:
+        prefix = f"{msg_id}.{msg_ts}.".encode("utf-8")
+        payload_variants.insert(0, prefix + payload)
+
+    matched = False
+    for secret in secrets_list:
+        key_candidates = []
+        if secret.startswith("whsec_"):
+            raw_b64 = secret[6:]
+            padded = raw_b64 + "=" * (-len(raw_b64) % 4)
+            try:
+                key_candidates.append(base64.b64decode(padded))
+            except Exception:
+                pass
+        key_candidates.append(secret.encode("utf-8"))
+
+        for key in key_candidates:
+            for p in payload_variants:
+                digest = hmac.new(key, msg=p, digestmod=hashlib.sha256).digest()
+                hex_sig = digest.hex()
+                b64_sig = base64.b64encode(digest).decode("utf-8")
+                for s in sig_tokens:
+                    if hmac.compare_digest(hex_sig, s) or hmac.compare_digest(b64_sig, s):
+                        matched = True
+                        break
+                if matched:
+                    break
+            if matched:
+                break
+        if matched:
+            break
+
+    if not matched:
+        logger.warning("Webhook signature mismatch with sig header: %s", sig_header)
         raise HTTPException(401, "Invalid webhook signature.")
 
 
@@ -276,11 +323,18 @@ def _handle_subscription_canceled(data: dict, db: Session) -> str:
 
 async def handle_polar_webhook(request: Request, db: Session) -> dict:
     payload = await request.body()
-    sig     = request.headers.get("webhook-signature", "")
+    sig = (
+        request.headers.get("webhook-signature")
+        or request.headers.get("Webhook-Signature")
+        or request.headers.get("polar-webhook-signature")
+        or ""
+    )
+    msg_id = request.headers.get("webhook-id") or request.headers.get("Webhook-Id") or ""
+    msg_ts = request.headers.get("webhook-timestamp") or request.headers.get("Webhook-Timestamp") or ""
 
     # Only verify if secret is configured (allows local testing without it)
     if POLAR_WEBHOOK_SECRET:
-        _verify_signature(payload, sig)
+        _verify_signature(payload, sig, msg_id=msg_id, msg_ts=msg_ts)
     else:
         logger.warning("POLAR_WEBHOOK_SECRET not set — skipping signature verification")
 

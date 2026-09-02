@@ -644,7 +644,7 @@ async def checkout_create(body: CheckoutCreate, request: Request, _=Depends(rate
         origin = request.headers.get("origin", "")
         success_url = f"{origin}/?activated=1" if origin else "/?activated=1"
 
-    polar_token = os.getenv("POLAR_ACCESS_TOKEN", "")
+    polar_token = os.getenv("POLAR_ACCESS_TOKEN", "polar_oat_CzzwiCagr4BULLzpgi0InUadqgOpZIAGw1UP00uOtTe")
     if not polar_token:
         raise HTTPException(500, "Polar API token not configured.")
 
@@ -681,6 +681,9 @@ async def checkout_create(body: CheckoutCreate, request: Request, _=Depends(rate
 # =============================================================================
 
 @app.post("/webhooks/polar")
+@app.post("/webhook/polar")
+@app.post("/api/webhook/polar")
+@app.post("/api/webhooks/polar")
 async def polar_webhook(request: Request):
     """Receive Polar.sh order/subscription events."""
     db = SessionLocal()
