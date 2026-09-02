@@ -26,7 +26,7 @@ from database import LicenseKey, UserSession, FreeUsage, User, AccountSession
 load_dotenv()
 logger = logging.getLogger("cloud-brief.auth")
 
-POLAR_ACCESS_TOKEN = os.getenv("POLAR_ACCESS_TOKEN", "")
+POLAR_ACCESS_TOKEN = os.getenv("POLAR_ACCESS_TOKEN", "polar_oat_CzzwiCagr4BULLzpgi0InUadqgOpZIAGw1UP00uOtTe")
 POLAR_API_BASE     = "https://api.polar.sh"
 
 TIER_LIMITS: dict[str, int] = {
